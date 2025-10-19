@@ -16,6 +16,7 @@ from database import (
     is_known_device
 )
 from ml_engine import load_models
+from otp import create_otp_challenge, verify_otp as otp_verify, get_otp_status
 
 # ============================================================================
 # PYDANTIC MODELS
@@ -37,6 +38,23 @@ class AuthenticateResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = Field(..., description="Health status")
+
+class RequestOTPRequest(BaseModel):
+    username: str = Field(..., description="Username to send OTP to")
+
+class RequestOTPResponse(BaseModel):
+    success: bool = Field(..., description="Whether OTP was sent successfully")
+    message: str = Field(..., description="Status message")
+    expires_in_minutes: Optional[int] = Field(None, description="OTP expiry time in minutes")
+
+class VerifyOTPRequest(BaseModel):
+    username: str = Field(..., description="Username")
+    otp_code: str = Field(..., description="OTP code to verify")
+
+class VerifyOTPResponse(BaseModel):
+    valid: bool = Field(..., description="Whether OTP is valid")
+    message: str = Field(..., description="Verification message")
+    attempts_remaining: Optional[int] = Field(None, description="Number of attempts remaining")
 
 # ============================================================================
 # LIFESPAN MANAGEMENT
@@ -198,6 +216,113 @@ async def authenticate(request: AuthenticateRequest):
     except Exception as e:
         print(f"Authentication error: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error during authentication")
+
+# ============================================================================
+# OTP ENDPOINTS
+# ============================================================================
+
+@app.post("/api/otp/request", response_model=RequestOTPResponse, tags=["OTP"])
+async def request_otp(request: RequestOTPRequest):
+    """
+    Request an OTP code to be sent to the user's email
+    
+    This endpoint:
+    1. Validates that the user exists
+    2. Generates a new OTP code
+    3. Sends it via email
+    4. Stores it in the database with 5-minute expiry
+    
+    Args:
+        request: Request containing username
+    
+    Returns:
+        Response indicating success/failure and expiry time
+    """
+    try:
+        # Get user to validate and get email
+        user = get_user(request.username)
+        
+        if not user:
+            return RequestOTPResponse(
+                success=False,
+                message="User not found"
+            )
+        
+        # Check if user account is active
+        if user['status'] != 'active':
+            return RequestOTPResponse(
+                success=False,
+                message=f"Account is {user['status']}"
+            )
+        
+        # Create OTP challenge
+        result = create_otp_challenge(request.username, user['email'])
+        
+        if result['success']:
+            return RequestOTPResponse(
+                success=True,
+                message=result['message'],
+                expires_in_minutes=result.get('expires_in_minutes')
+            )
+        else:
+            return RequestOTPResponse(
+                success=False,
+                message=result.get('error', 'Failed to create OTP')
+            )
+        
+    except Exception as e:
+        print(f"OTP request error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error during OTP request")
+
+@app.post("/api/otp/verify", response_model=VerifyOTPResponse, tags=["OTP"])
+async def verify_otp_endpoint(request: VerifyOTPRequest):
+    """
+    Verify an OTP code entered by the user
+    
+    This endpoint:
+    1. Validates the OTP code against the database
+    2. Checks if OTP has expired
+    3. Tracks verification attempts (max 3)
+    4. Marks OTP as verified if successful
+    
+    Args:
+        request: Request containing username and OTP code
+    
+    Returns:
+        Response indicating if OTP is valid and attempts remaining
+    """
+    try:
+        # Verify OTP
+        result = otp_verify(request.username, request.otp_code)
+        
+        return VerifyOTPResponse(
+            valid=result['valid'],
+            message=result['message'],
+            attempts_remaining=result.get('attempts_remaining')
+        )
+        
+    except Exception as e:
+        print(f"OTP verification error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error during OTP verification")
+
+@app.get("/api/otp/status/{username}", tags=["OTP"])
+async def get_otp_status_endpoint(username: str):
+    """
+    Get the status of active OTP for a user
+    
+    Args:
+        username: Username to check OTP status for
+    
+    Returns:
+        OTP status information including expiry and attempts
+    """
+    try:
+        status = get_otp_status(username)
+        return status
+        
+    except Exception as e:
+        print(f"OTP status error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error while checking OTP status")
 
 # ============================================================================
 # ROOT ENDPOINT
