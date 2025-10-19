@@ -2,7 +2,6 @@ import sqlite3
 from contextlib import contextmanager
 from typing import Optional, List, Dict, Any
 import os
-from pathlib import Path
 
 # Database configuration
 DB_PATH = os.getenv("DB_PATH", "app.db")

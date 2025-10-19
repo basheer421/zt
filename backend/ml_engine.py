@@ -4,6 +4,8 @@ from typing import Dict, Any, Optional, List
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.datasets import make_classification
 
 # Model storage
 MODELS_DIR = Path(__file__).parent / "models"
@@ -114,8 +116,7 @@ def batch_predict(model_name: str, input_data_list: List[Any]) -> List[Dict[str,
 # Example: Create a simple dummy model for testing
 def create_dummy_model():
     """Create a simple dummy model for testing purposes"""
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.datasets import make_classification
+
     
     # Generate dummy data
     X, y = make_classification(n_samples=100, n_features=4, random_state=42)
