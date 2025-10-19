@@ -3,6 +3,10 @@ from contextlib import contextmanager
 from typing import Optional, List, Dict, Any
 import os
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Database configuration
 DB_PATH = os.getenv("DB_PATH", "zt_verify.db")
