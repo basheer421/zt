@@ -68,4 +68,12 @@ env: ## Create .env file from .env.example
 setup: env install init-db ## Complete setup: create env, install deps, init db
 	@echo "Setup complete! Run 'make dev' to start the application."
 
+view-db:
+	@echo "Opening SQLite database using sqlite-web..."
+	docker run -it --rm \
+		-p 8080:8080 \
+		-v $(PWD):/data \
+		-e SQLITE_DATABASE=zt_verify.db \
+		ghcr.io/coleifer/sqlite-web:latest
+
 all: clean install docker-build ## Clean, install, and build Docker image
