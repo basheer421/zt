@@ -55,11 +55,11 @@ def test_authenticate_valid_user():
     print("\n" + "=" * 60)
     print("TEST 3: Authenticate - Valid User (john_doe)")
     print("=" * 60)
-    print("Note: Using test user 'john_doe' created by test_database.py")
+    print("Note: Using test user 'john_doe' with password 'Test123!' from seed_data.py")
     
     payload = {
         "username": "john_doe",
-        "password": "SecurePass123!",
+        "password": "Test123!",
         "timestamp": datetime.now().isoformat(),
         "device_fingerprint": "test_device_002",
         "ip_address": "192.168.1.101",
