@@ -85,12 +85,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware - Allow localhost:3000 and localhost:3001
+# CORS middleware - Allow localhost ports for frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://localhost:5173",  # Vite default port
     ],
     allow_credentials=True,
     allow_methods=["*"],
