@@ -11,7 +11,7 @@ set PORT=5173
 echo Note that there has to be a web server running on port %PORT% serving the kiosk app.
 
 REM Launch Firefox in kiosk mode
-set "KIOSK_URL=http://172.21.136.124:%PORT%"
+set "KIOSK_URL=https://zt-two.vercel.app"
 echo Launching kiosk mode at %KIOSK_URL%
 
 REM Common Firefox installation paths (tries multiple locations)
