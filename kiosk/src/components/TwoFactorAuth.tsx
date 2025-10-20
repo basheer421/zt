@@ -180,14 +180,14 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+    <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden">
       <div className="w-full max-w-md px-8">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-6">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-4">
+          <div className="text-center mb-5">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-3">
               <svg
-                className="w-8 h-8 text-white"
+                className="w-7 h-7 text-white"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -200,14 +200,14 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">
               Two-Factor Authentication
             </h1>
-            <p className="text-gray-600 mb-2">
+            <p className="text-sm text-gray-600 mb-1">
               Enter the verification code sent to your email
             </p>
             {maskedEmail && (
-              <p className="text-sm text-indigo-600 font-medium">
+              <p className="text-xs text-indigo-600 font-medium">
                 {maskedEmail}
               </p>
             )}
@@ -215,11 +215,11 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
           </div>
 
           {/* OTP Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="otp"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Verification Code
               </label>
@@ -228,7 +228,7 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
                 id="otp"
                 value={otpCode}
                 onChange={(e) => handleOtpChange(e.target.value)}
-                className="w-full px-4 py-3 text-center text-2xl tracking-[0.5em] font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all outline-none"
+                className="w-full px-3 py-2 text-center text-xl tracking-[0.5em] font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all outline-none"
                 placeholder="000000"
                 maxLength={6}
                 inputMode="numeric"
@@ -325,11 +325,11 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
             )}
 
             {/* Action Buttons */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Button
                 type="submit"
                 variant="primary"
-                size="lg"
+                size="md"
                 className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
                 disabled={status.type === "loading" || otpCode.length !== 6}
               >
@@ -340,7 +340,7 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
                 <Button
                   type="button"
                   variant="secondary"
-                  size="lg"
+                  size="md"
                   className="w-full"
                   onClick={onBack}
                   disabled={status.type === "loading"}
@@ -352,12 +352,12 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
           </form>
 
           {/* Resend Code Section */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600 mb-2">Didn't receive a code?</p>
+          <div className="mt-4 text-center">
+            <p className="text-xs text-gray-600 mb-1">Didn't receive a code?</p>
             <button
               onClick={handleResend}
               disabled={status.type === "loading"}
-              className={`text-sm font-medium transition-colors ${
+              className={`text-xs font-medium transition-colors ${
                 status.type === "loading"
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-indigo-600 hover:text-indigo-800"
@@ -368,10 +368,8 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
           </div>
 
           {/* Footer */}
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-xs text-gray-500">
-              Code expires in 5 minutes • Check your spam folder
-            </p>
+          <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+            <p className="text-xs text-gray-500">Code expires in 5 minutes</p>
           </div>
         </div>
       </div>
