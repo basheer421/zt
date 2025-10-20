@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { FormEvent } from "react";
 import { Button } from "./Button";
 import { api } from "../utils/api";
@@ -55,10 +55,14 @@ const TwoFactorAuth = ({
   const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(
     null
   );
+  const otpRequestedRef = useRef(false);
 
-  // Request OTP on component mount
+  // Request OTP on component mount (only once)
   useEffect(() => {
-    requestOTP();
+    if (!otpRequestedRef.current) {
+      otpRequestedRef.current = true;
+      requestOTP();
+    }
   }, []);
 
   const requestOTP = async () => {
