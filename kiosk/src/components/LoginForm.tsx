@@ -125,7 +125,16 @@ const LoginForm = () => {
 
   // Render different screens based on auth state
   if (authState === "otp") {
-    return <TwoFactorAuth username={username} />;
+    return (
+      <TwoFactorAuth
+        username={username}
+        onBack={() => setAuthState("login")}
+        onSuccess={() => {
+          setAuthState("success");
+          unlockDesktop();
+        }}
+      />
+    );
   }
 
   if (authState === "blocked") {

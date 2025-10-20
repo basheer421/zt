@@ -195,22 +195,28 @@ def create_otp_challenge(username: str, user_email: str) -> Dict[str, Any]:
         True
     """
     try:
-        # Check if there's an active OTP
-        active_otp = get_active_otp(username)
-        if active_otp:
-            # Calculate remaining time
-            expires_at = datetime.fromisoformat(active_otp['expires_at'])
-            remaining_seconds = (expires_at - datetime.now()).total_seconds()
-            
-            if remaining_seconds > 0:
-                return {
-                    'success': False,
-                    'error': f'An OTP was recently sent. Please wait {int(remaining_seconds)} seconds before requesting a new one.',
-                    'remaining_seconds': int(remaining_seconds)
-                }
+        # COOLDOWN REMOVED - Allow multiple OTP requests
+        # active_otp = get_active_otp(username)
+        # if active_otp:
+        #     # Calculate remaining time
+        #     expires_at = datetime.fromisoformat(active_otp['expires_at'])
+        #     remaining_seconds = (expires_at - datetime.now()).total_seconds()
+        #     
+        #     if remaining_seconds > 0:
+        #         return {
+        #             'success': False,
+        #             'error': f'An OTP was recently sent. Please wait {int(remaining_seconds)} seconds before requesting a new one.',
+        #             'remaining_seconds': int(remaining_seconds)
+        #         }
         
         # Generate new OTP
         otp_code = generate_otp()
+        
+        # DEV: Print OTP to console (remove in production)
+        print("=" * 60)
+        print(f"📧 OTP CODE FOR {username.upper()}: {otp_code}")
+        print(f"   Expires in {OTP_EXPIRY_MINUTES} minutes")
+        print("=" * 60)
         
         # Store in database
         otp_id = store_otp(

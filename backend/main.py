@@ -193,6 +193,29 @@ async def authenticate(request: AuthenticateRequest):
         # Calculate risk score (simple version - can be enhanced with ML)
         risk_score = 0.0 if device_known else 0.5
         
+        # DECISION: Require 2FA for unknown devices or high-risk scenarios
+        # You can customize this logic based on your requirements
+        require_2fa = not device_known  # Require 2FA for unknown devices
+        
+        if require_2fa:
+            # Return OTP challenge instead of allowing direct login
+            log_login_attempt(
+                username=request.username,
+                ip_address=request.ip_address,
+                device_fingerprint=request.device_fingerprint,
+                location=request.location,
+                risk_score=risk_score,
+                action="challenge",
+                success=False
+            )
+            
+            return AuthenticateResponse(
+                status="otp",
+                message="Two-factor authentication required",
+                username=request.username,
+                risk_score=risk_score
+            )
+        
         # Register/update device
         register_device(request.username, request.device_fingerprint)
         
