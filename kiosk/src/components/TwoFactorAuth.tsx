@@ -7,6 +7,7 @@ interface TwoFactorAuthProps {
   username: string;
   onBack?: () => void;
   onSuccess?: () => void;
+  onBlocked?: (riskScore: number, reason: string) => void;
 }
 
 interface OTPRequestResponse {
@@ -39,7 +40,12 @@ const maskEmail = (email: string): string => {
   return `${masked}@${domain}`;
 };
 
-const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
+const TwoFactorAuth = ({
+  username,
+  onBack,
+  onSuccess,
+  onBlocked,
+}: TwoFactorAuthProps) => {
   const [otpCode, setOtpCode] = useState("");
   const [maskedEmail, setMaskedEmail] = useState<string>("");
   const [status, setStatus] = useState<{
@@ -150,6 +156,22 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
         // Update attempts remaining
         if (response.attempts_remaining !== undefined) {
           setAttemptsRemaining(response.attempts_remaining);
+
+          // Check if user is blocked (0 attempts remaining)
+          if (response.attempts_remaining === 0) {
+            setStatus({
+              type: "error",
+              message: "Too many failed attempts. Access blocked.",
+            });
+
+            // Trigger blocked state after a short delay
+            setTimeout(() => {
+              if (onBlocked) {
+                onBlocked(85, "Multiple failed OTP verification attempts");
+              }
+            }, 2000);
+            return;
+          }
         }
 
         setStatus({
@@ -360,7 +382,7 @@ const TwoFactorAuth = ({ username, onBack, onSuccess }: TwoFactorAuthProps) => {
               className={`text-xs font-medium transition-colors ${
                 status.type === "loading"
                   ? "text-gray-400 cursor-not-allowed"
-                  : "text-indigo-600 hover:text-indigo-800"
+                  : "text-indigo-600 hover:text-indigo-800 cursor-pointer"
               }`}
             >
               Resend Code

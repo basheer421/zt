@@ -29,6 +29,7 @@ const LoginForm = () => {
   }>({ type: "idle", message: "" });
   const [authState, setAuthState] = useState<AuthState>("login");
   const [riskScore, setRiskScore] = useState<number>(0);
+  const [blockReason, setBlockReason] = useState<string>("");
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -96,6 +97,7 @@ const LoginForm = () => {
           if (response.risk_score !== undefined) {
             setRiskScore(Math.round(response.risk_score * 100));
           }
+          setBlockReason(response.message || "Suspicious Activity Detected");
           setStatus({
             type: "error",
             message: "Access denied",
@@ -138,12 +140,23 @@ const LoginForm = () => {
           setAuthState("success");
           unlockDesktop();
         }}
+        onBlocked={(score, reason) => {
+          setRiskScore(score);
+          setBlockReason(reason);
+          setAuthState("blocked");
+        }}
       />
     );
   }
 
   if (authState === "blocked") {
-    return <BlockedScreen riskScore={riskScore} username={username} />;
+    return (
+      <BlockedScreen
+        riskScore={riskScore}
+        username={username}
+        reason={blockReason}
+      />
+    );
   }
 
   // Main login form
