@@ -1,0 +1,18 @@
+[Unit]
+Description=Zero Trust Kiosk Application
+After=graphical.target
+
+[Service]
+Type=simple
+User=kiosk
+Environment=DISPLAY=:0
+ExecStart=/opt/zero-trust-kiosk/zero-trust-kiosk
+Restart=always
+RestartSec=5
+
+# Security settings
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=graphical.target

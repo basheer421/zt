@@ -1,10 +1,34 @@
 // Kiosk Mode Security - Block user inputs that can escape the kiosk
 
 /**
+ * Check if running in Electron
+ */
+const isElectron = (): boolean => {
+  return (
+    typeof window !== "undefined" && window.electronAPI?.isElectron === true
+  );
+};
+
+/**
  * Blocks keyboard shortcuts and inputs that could allow users to exit kiosk mode
- * Keeps Alt+F4 functional as it's handled by the OS/browser kiosk mode
+ *
+ * BROWSER MODE: Blocks browser-level shortcuts (Ctrl+T, Ctrl+N, F12, etc.)
+ * ELECTRON MODE: Skips blocking - Electron handles this with globalShortcut API
  */
 export const blockKioskEscapeInputs = () => {
+  // If running in Electron, global shortcuts are handled by main process
+  if (isElectron()) {
+    console.log(
+      "🔒 Running in Electron - global shortcuts handled by main process"
+    );
+    console.log("✅ Browser-level blocking skipped (not needed in Electron)");
+    return () => {}; // Return empty cleanup function
+  }
+
+  console.log(
+    "🌐 Running in browser - enabling browser-level shortcut blocking"
+  );
+
   // Prevent keyboard shortcuts
   const handleKeyDown = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase();
@@ -14,9 +38,12 @@ export const blockKioskEscapeInputs = () => {
     const shift = e.shiftKey;
 
     // Block Alt+Tab (window switching)
+    // NOTE: This cannot actually be blocked in browsers - requires OS-level config
     if (alt && key === "tab") {
       e.preventDefault();
-      console.log("🚫 Blocked: Alt+Tab");
+      console.warn(
+        "⚠️ Alt+Tab cannot be blocked in browsers - use Electron or OS config"
+      );
       return false;
     }
 

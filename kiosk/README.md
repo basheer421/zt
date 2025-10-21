@@ -2,6 +2,11 @@
 
 A modern kiosk frontend application built with React, TypeScript, Vite, and Tailwind CSS.
 
+**🖥️ Dual Deployment:** Runs as a web app OR as an Electron desktop app with true OS-level security.
+
+> **For Electron Desktop App:** See [ELECTRON_README.md](./ELECTRON_README.md) for desktop deployment with Alt+Tab blocking.  
+> **For Linux Deployment:** See [LINUX_SETUP.md](./LINUX_SETUP.md) for Ubuntu/Openbox kiosk setup.
+
 ## 🚀 Tech Stack
 
 - **React 18** - Modern React with hooks
@@ -9,6 +14,7 @@ A modern kiosk frontend application built with React, TypeScript, Vite, and Tail
 - **Vite** - Lightning-fast build tool
 - **Tailwind CSS** - Utility-first CSS framework
 - **PostCSS & Autoprefixer** - CSS processing
+- **Electron** (Optional) - Desktop app with OS-level security
 
 ## 📁 Project Structure
 
