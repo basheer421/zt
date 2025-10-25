@@ -15,7 +15,7 @@ from database import (
     register_device,
     is_known_device
 )
-from ml_engine import load_models
+from ml_engine_uae import predict_risk_hybrid as predict_risk
 from otp import create_otp_challenge, verify_otp as otp_verify, get_otp_status
 
 # ============================================================================
@@ -67,7 +67,8 @@ async def lifespan(app: FastAPI):
     print("Starting ZT-Verify Backend...")
     print("=" * 60)
     init_db()
-    load_models()
+    print("✓ Database initialized")
+    print("✓ UAE-focused ML engine ready")
     print("Backend ready!")
     yield
     # Shutdown
@@ -183,15 +184,46 @@ async def authenticate(request: AuthenticateRequest):
                 message="Invalid username or password"
             )
         
-        # Password is correct - check device trust
+        # Password is correct - use ML to assess risk
+        # Prepare login data for UAE ML engine
+        # Parse location to get country (format: "City, Country")
+        country = 'XX'
+        if request.location:
+            parts = request.location.split(',')
+            if len(parts) >= 2:
+                country = parts[-1].strip()[:2].upper()
+        
+        login_data = {
+            'ip_address': request.ip_address,
+            'country': country,
+            'asn': 0,  # Unknown ASN (could be enhanced with IP lookup)
+            'device_type': 'desktop',  # Could be enhanced with device fingerprint parsing
+            'user_agent': 'Unknown',  # Should be added to AuthenticateRequest if available
+            'browser': 'Unknown',
+            'os': 'Unknown',
+            'timestamp': request.timestamp
+        }
+        
+        # Get ML-based risk assessment
+        risk_assessment = predict_risk(request.username, login_data)
+        risk_score = risk_assessment['risk_score'] / 100.0  # Convert 0-100 to 0-1 for compatibility
+        ml_risk_score = risk_assessment['risk_score']  # Keep original 0-100 score
+        
+        # DECISION: Require 2FA based on ML risk assessment
+        # High risk (70+) = Require 2FA
+        # Medium risk (30-70) = Require 2FA for unknown devices
+        # Low risk (<30) = Allow direct login
         device_known = is_known_device(request.username, request.device_fingerprint)
         
-        # Calculate risk score (simple version - can be enhanced with ML)
-        risk_score = 0.0 if device_known else 0.5
-        
-        # DECISION: Require 2FA for unknown devices or high-risk scenarios
-        # You can customize this logic based on your requirements
-        require_2fa = not device_known  # Require 2FA for unknown devices
+        if ml_risk_score >= 70:
+            # High risk - always require 2FA
+            require_2fa = True
+        elif ml_risk_score >= 30:
+            # Medium risk - require 2FA for unknown devices
+            require_2fa = not device_known
+        else:
+            # Low risk - allow direct login
+            require_2fa = False
         
         if require_2fa:
             # Return OTP challenge instead of allowing direct login
