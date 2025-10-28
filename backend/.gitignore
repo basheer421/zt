@@ -52,4 +52,4 @@ dataset/
 *.log
 
 # Models (optional - uncomment if you don't want to track model files)
-models/*.pkl
+# models/*.pkl

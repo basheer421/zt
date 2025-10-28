@@ -140,6 +140,73 @@ See `.env.example` for all available configuration options.
 - SQLite
 - Scikit-learn for ML models
 
+## GUI Setup for Presentation (Ubuntu Server)
+
+### Install Minimal GUI Environment
+
+If you want to run the Electron kiosk app on Ubuntu Server:
+
+```bash
+# Install minimal X server and Openbox window manager
+sudo apt-get update
+sudo apt-get install -y xorg openbox xinit
+
+# Install Node
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+source ~/.bashrc
+nvm install --lts
+
+
+# Install Electron dependencies
+sudo apt-get install -y \
+  libgtk-3-0 \
+  libnotify4 \
+  libnss3 \
+  libxss1 \
+  libxtst6 \
+  xdg-utils \
+  libatspi2.0-0 \
+  libdrm2 \
+  libgbm1 \
+  libxcb-dri3-0
+```
+
+### Start the Kiosk App
+
+```bash
+# Start X server with Openbox
+startx
+
+# In the X terminal that opens:
+cd ~/code/ZT/kiosk
+npm install
+npm start
+```
+
+### Presentation Demo (No GUI Needed)
+
+**Recommended:** Use the automated demo script instead of the GUI:
+
+```bash
+# Start backend
+cd backend
+./start_demo.sh
+
+# Run automated demo (shows 3 risk levels with colors)
+python presentation_demo.py
+
+# Or use Swagger UI for interactive demo
+# Open browser: http://localhost:8000/docs
+```
+
+**Demo Files:**
+
+- `DEMO_QUICK_START.md` - Quick reference guide
+- `PRESENTATION_TESTING_GUIDE.md` - Complete presentation guide
+- `test_scenarios.json` - All 9 test cases with JSON
+- `presentation_demo.py` - Automated color-coded demo
+- `UAE_TEST_CASES.md` - 20 detailed UAE-specific test cases
+
 ## License
 
 MIT

@@ -9,7 +9,7 @@ This guide covers setting up the Zero Trust Kiosk on Ubuntu/Linux with Openbox f
 ```bash
 # Ubuntu/Debian
 sudo apt update
-sudo apt install -y openbox xorg unclutter
+sudo apt install -y openbox xorg unclutter firefox
 
 # For development
 cd kiosk

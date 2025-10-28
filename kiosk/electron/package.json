@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "Zero Trust Kiosk - Electron Desktop Application",
   "main": "main.js",
-  "author": "Zero Trust Team",
+  "author": {
+    "name": "ZT Team",
+    "email": "zerotrust@example.com",
+    "url": "https://www.google.com"
+  },
+  "homepage": "https://www.google.com",
   "license": "MIT",
   "scripts": {
     "electron:dev": "NODE_ENV=development electron .",
@@ -16,10 +21,6 @@
       "buildResources": "build",
       "output": "release"
     },
-    "files": [
-      "electron/**/*",
-      "dist/**/*"
-    ],
     "linux": {
       "target": [
         "AppImage",
