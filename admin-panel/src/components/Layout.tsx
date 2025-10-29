@@ -27,15 +27,15 @@ export default function Layout() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg">
-        <div className="p-6 border-b">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
+      {/* Sidebar - Fixed */}
+      <aside className="w-64 bg-white shadow-lg flex flex-col">
+        <div className="p-6 border-b flex-shrink-0">
           <h1 className="text-2xl font-bold text-primary-600">ZT-Verify</h1>
           <p className="text-sm text-gray-500 mt-1">Admin Panel</p>
         </div>
 
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
@@ -54,7 +54,7 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="absolute bottom-0 w-64 p-4 border-t bg-white">
+        <div className="p-4 border-t bg-white flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
@@ -78,8 +78,8 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      {/* Main Content - Scrollable */}
+      <main className="flex-1 overflow-y-auto">
         <div className="p-8">
           <Outlet />
         </div>
