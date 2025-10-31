@@ -4,9 +4,13 @@ const path = require("path");
 // Environment detection
 const isDev = process.env.NODE_ENV === "development";
 const PRODUCTION_URL = "https://zt-two.vercel.app";
-const VITE_DEV_SERVER_URL = PRODUCTION_URL; //'http://localhost:5173';
+const VITE_DEV_SERVER_URL = "http://localhost:5173";
 
 let mainWindow = null;
+
+console.log("🚀 Starting Electron app...");
+console.log("📍 Environment:", isDev ? "DEVELOPMENT" : "PRODUCTION");
+console.log("🌐 Will load from:", isDev ? VITE_DEV_SERVER_URL : PRODUCTION_URL);
 
 /**
  * Block all escape shortcuts using Electron's globalShortcut API
@@ -114,6 +118,8 @@ function createWindow() {
       nodeIntegration: false, // Security best practice
       contextIsolation: true, // Security best practice
       devTools: isDev, // Only allow DevTools in development
+      webSecurity: true,
+      allowRunningInsecureContent: false,
     },
   });
 
