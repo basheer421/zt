@@ -17,9 +17,10 @@ export default function AdminUsers() {
   const loadAdmins = async () => {
     try {
       const response = await adminUsersAPI.getAll();
-      setAdmins(response.data);
+      setAdmins(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to load admin users:", error);
+      setAdmins([]);
     } finally {
       setLoading(false);
     }

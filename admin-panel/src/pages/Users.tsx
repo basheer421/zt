@@ -14,9 +14,10 @@ export default function Users() {
   const loadUsers = async () => {
     try {
       const response = await usersAPI.getAll();
-      setUsers(response.data);
+      setUsers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to load users:", error);
+      setUsers([]);
     } finally {
       setLoading(false);
     }

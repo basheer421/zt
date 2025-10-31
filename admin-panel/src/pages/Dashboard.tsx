@@ -30,9 +30,12 @@ export default function Dashboard() {
         dashboardAPI.getRecentActivity(10),
       ]);
       setStats(statsRes.data);
-      setRecentActivity(activityRes.data);
+      setRecentActivity(
+        Array.isArray(activityRes.data) ? activityRes.data : []
+      );
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
+      setRecentActivity([]);
     } finally {
       setLoading(false);
     }

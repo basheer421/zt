@@ -17,9 +17,10 @@ export default function LoginAttempts() {
     try {
       setLoading(true);
       const response = await loginAttemptsAPI.getAll({ days: filterDays });
-      setAttempts(response.data);
+      setAttempts(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Failed to load login attempts:", error);
+      setAttempts([]);
     } finally {
       setLoading(false);
     }
