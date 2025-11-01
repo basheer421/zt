@@ -3,11 +3,20 @@ services:
     name: zt-verify-backend
     runtime: python
     plan: free
-    buildCommand: ./build.sh
+    region: oregon
+    buildCommand: |
+      python --version
+      pip install --upgrade pip
+      pip install --only-binary=:all: -r requirements-render.txt || pip install -r requirements-render.txt
+      python -c "from database import init_db; init_db()"
+      python create_demo_users.py || true
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: DB_PATH
         value: /opt/render/project/src/zt_verify.db
+      - key: PIP_NO_CACHE_DIR
+        value: 1
     autoDeploy: true

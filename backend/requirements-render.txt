@@ -1,0 +1,22 @@
+# Core FastAPI dependencies
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+
+# ML dependencies - use versions with pre-built wheels
+scikit-learn==1.5.2
+pandas==2.2.3
+numpy==2.0.2
+joblib==1.4.2
+
+# Authentication
+bcrypt==4.2.0
+PyJWT==2.9.0
+
+# Utilities
+python-multipart==0.0.12
+python-dotenv==1.0.1
+pydantic==2.9.2
+pydantic-settings==2.5.2
+
+# Email (optional - can be removed if not using)
+resend==2.4.0
