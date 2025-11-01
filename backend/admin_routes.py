@@ -177,13 +177,15 @@ async def create_new_user(
     ).decode('utf-8')
     
     # Create user
-    user_id = create_user(request.username, password_hash, request.email)
+    user_id = create_user(request.username, password_hash, request.email, status='active')
     
     return {
         "id": user_id,
         "username": request.username,
         "email": request.email,
-        "status": "active"
+        "password": request.password,  # Return plain password so admin can share it
+        "status": "active",
+        "message": "User created successfully. Share these credentials with the user."
     }
 
 @router.patch("/users/{user_id}/status")

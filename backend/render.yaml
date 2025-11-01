@@ -9,6 +9,7 @@ services:
       pip install --upgrade pip
       pip install --only-binary=:all: -r requirements-render.txt || pip install -r requirements-render.txt
       python -c "from database import init_db; init_db()"
+      python create_default_admin.py || true
       python create_demo_users.py || true
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/health

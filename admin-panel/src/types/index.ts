@@ -6,6 +6,11 @@ export interface User {
   created_at: string;
 }
 
+export interface CreateUserResponse extends User {
+  password: string; // Only returned when creating a new user
+  message: string;
+}
+
 export interface LoginAttempt {
   id: number;
   username: string;

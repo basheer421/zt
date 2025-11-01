@@ -5,11 +5,12 @@ A modern React admin panel for managing the ZT-Verify zero-trust authentication 
 ## Features
 
 - 📊 **Dashboard** - Overview with statistics, charts, and recent activity
-- 👥 **User Management** - View, edit, suspend, and delete users
+- 👥 **User Management** - View, edit, suspend, delete, and **create new users**
 - 🔐 **Login Attempts** - Monitor all authentication attempts with filtering
 - 📈 **Risk Analytics** - Visualize risk scores and identify high-risk users
 - 👨‍💼 **Admin Management** - Create and manage administrator accounts
 - 🎨 **Modern UI** - Built with React, TypeScript, and Tailwind CSS
+- 🔑 **User Creation** - Create users and get shareable credentials with copy-to-clipboard
 
 ## Tech Stack
 
@@ -60,22 +61,23 @@ The admin panel will be available at `http://localhost:5174`
 
 ### 4. Create Initial Admin User
 
-Before logging in, you need to create an admin user in the backend database. From the backend directory:
+The backend automatically creates a default admin user during deployment:
+
+**Default Admin Credentials:**
+
+- Username: `admin`
+- Password: `Admin123!`
+
+⚠️ **IMPORTANT**: Change this password after first login!
+
+If you need to create additional admin users manually from the backend:
 
 ```bash
 # Using Python
-python3 -c "
-import bcrypt
-from database import init_db, create_admin_user
-
-init_db()
-password_hash = bcrypt.hashpw('admin123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-create_admin_user('admin', password_hash)
-print('Admin user created: admin / admin123')
-"
+python create_admin.py
 ```
 
-Or use the backend's seed script if available.
+Follow the prompts to create a new admin user.
 
 ### 5. Login
 

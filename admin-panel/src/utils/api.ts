@@ -1,6 +1,7 @@
 import axios from "axios";
-import type {
+import {
   User,
+  CreateUserResponse,
   LoginAttempt,
   AdminUser,
   DashboardStats,
@@ -56,7 +57,7 @@ export const usersAPI = {
   getById: (id: number) => api.get<User>(`/admin/users/${id}`),
 
   create: (data: { username: string; password: string; email: string }) =>
-    api.post<User>("/admin/users", data),
+    api.post<CreateUserResponse>("/admin/users", data),
 
   update: (id: number, data: Partial<User>) =>
     api.put<User>(`/admin/users/${id}`, data),

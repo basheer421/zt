@@ -16,6 +16,18 @@ Create them with: `python create_demo_users.py`
 
 Test at: http://localhost:8000/docs
 
+## 👨‍💼 Default Admin Account
+
+A default admin account is automatically created during deployment:
+
+| Username | Password    | Purpose            |
+| -------- | ----------- | ------------------ |
+| `admin`  | `Admin123!` | Admin panel access |
+
+⚠️ **Change this password after first login!**
+
+Access admin panel at: `/admin` or use the separate admin-panel app
+
 ---
 
 ## Features
