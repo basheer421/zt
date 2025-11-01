@@ -2,6 +2,22 @@
 
 A complete Python FastAPI backend with SQLite database and ML model integration.
 
+## 🎯 Quick Demo - Hardcoded Risk Users
+
+For immediate testing, three demo users are available with **hardcoded risk levels**:
+
+| Username      | Password   | Risk Level  | Color |
+| ------------- | ---------- | ----------- | ----- |
+| `green_user`  | `Test123!` | Low (15)    | 🟢    |
+| `yellow_user` | `Test123!` | Medium (50) | 🟡    |
+| `red_user`    | `Test123!` | High (85)   | 🔴    |
+
+Create them with: `python create_demo_users.py`
+
+Test at: http://localhost:8000/docs
+
+---
+
 ## Features
 
 - ✅ FastAPI REST API
@@ -58,13 +74,27 @@ backend/
    make init-db
    ```
 
-4. **Run the application:**
+4. **Create demo users (optional but recommended):**
+
+   ```bash
+   python create_demo_users.py
+   ```
+
+   This creates three demo users with hardcoded risk levels:
+
+   - `green_user` (Low Risk - 🟢)
+   - `yellow_user` (Medium Risk - 🟡)
+   - `red_user` (High Risk - 🔴)
+
+   All use password: `Test123!`
+
+5. **Run the application:**
 
    ```bash
    make dev
    ```
 
-5. **Access the API:**
+6. **Access the API:**
    - API: http://localhost:8000
    - Docs: http://localhost:8000/docs
    - Health: http://localhost:8000/health
@@ -128,6 +158,47 @@ result = predict("model_name", {"feature1": 1.0, "feature2": 2.0})
 - `GET /health` - Health check
 - `GET /api/protected` - Example protected endpoint
 - `GET /docs` - Interactive API documentation
+
+## Demo Users with Hardcoded Risk Levels
+
+For demonstration purposes, the following users have **hardcoded risk scores** that override the ML model predictions:
+
+| Username      | Risk Score | Risk Level | Color     | Behavior                              |
+| ------------- | ---------- | ---------- | --------- | ------------------------------------- |
+| `green_user`  | 15         | Low        | 🟢 GREEN  | Direct login allowed, no 2FA required |
+| `yellow_user` | 50         | Medium     | 🟡 YELLOW | 2FA required for unknown devices      |
+| `red_user`    | 85         | High       | 🔴 RED    | Always requires 2FA verification      |
+
+### Risk Level Thresholds
+
+- **🟢 LOW (0-29)**: Direct login allowed
+- **🟡 MEDIUM (30-69)**: 2FA required for unknown devices
+- **🔴 HIGH (70-100)**: Always requires 2FA
+
+### Testing Demo Users
+
+These users can be created with the default password `Test123!` using:
+
+```bash
+# Create demo users
+python create_admin.py green_user user@example.com
+python create_admin.py yellow_user user@example.com
+python create_admin.py red_user user@example.com
+```
+
+Or use the quick script:
+
+```bash
+# Create all demo users at once
+python create_demo_users.py
+
+# Test the hardcoded users (requires backend running)
+python test_demo_users.py
+```
+
+Or use the `/api/authenticate` endpoint with any of these usernames to see the hardcoded risk behavior. All other users will use the ML model for risk assessment.
+
+**Note**: The hardcoded logic is in `main.py` in the `/api/authenticate` endpoint and does not modify the ML model itself.
 
 ## Environment Variables
 

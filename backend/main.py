@@ -208,10 +208,28 @@ async def authenticate(request: AuthenticateRequest):
             'timestamp': request.timestamp
         }
         
-        # Get ML-based risk assessment
-        risk_assessment = predict_risk(request.username, login_data)
-        risk_score = risk_assessment['risk_score'] / 100.0  # Convert 0-100 to 0-1 for compatibility
-        ml_risk_score = risk_assessment['risk_score']  # Keep original 0-100 score
+        # HARDCODED DEMO USERS - Override ML predictions for demo purposes
+        # These users always return specific risk levels regardless of actual data
+        DEMO_USERS = {
+            'green_user': 15,   # Low risk - GREEN (0-29)
+            'yellow_user': 50,  # Medium risk - YELLOW (30-69)
+            'red_user': 85      # High risk - RED (70-100)
+        }
+        
+        if request.username in DEMO_USERS:
+            # Use hardcoded risk score for demo users
+            ml_risk_score = DEMO_USERS[request.username]
+            risk_assessment = {
+                'risk_score': ml_risk_score,
+                'risk_level': 'low' if ml_risk_score < 30 else 'medium' if ml_risk_score < 70 else 'high',
+                'factors': ['Demo user with hardcoded risk score']
+            }
+        else:
+            # Get ML-based risk assessment for regular users
+            risk_assessment = predict_risk(request.username, login_data)
+            ml_risk_score = risk_assessment['risk_score']  # Keep original 0-100 score
+        
+        risk_score = ml_risk_score / 100.0  # Convert 0-100 to 0-1 for compatibility
         
         # DECISION: Require 2FA based on ML risk assessment
         # High risk (70+) = Require 2FA
