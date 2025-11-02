@@ -300,8 +300,8 @@ export default function Users() {
                     <label className="block text-xs font-medium text-gray-500 mb-1">
                       Username
                     </label>
-                    <div className="flex justify-between items-center">
-                      <span className="font-mono text-sm">
+                    <div className="flex justify-between items-center text-black">
+                      <span className="font-mono text-sm text-black">
                         {createdUser.username}
                       </span>
                       <button
@@ -322,8 +322,8 @@ export default function Users() {
                     <label className="block text-xs font-medium text-gray-500 mb-1">
                       Email
                     </label>
-                    <div className="flex justify-between items-center">
-                      <span className="font-mono text-sm">
+                    <div className="flex justify-between items-center text-black">
+                      <span className="font-mono text-sm text-black">
                         {createdUser.email}
                       </span>
                       <button
@@ -344,8 +344,8 @@ export default function Users() {
                     <label className="block text-xs font-medium text-yellow-800 mb-1">
                       Password
                     </label>
-                    <div className="flex justify-between items-center">
-                      <span className="font-mono text-sm">
+                    <div className="flex justify-between items-center text-black">
+                      <span className="font-mono text-sm text-black">
                         {createdUser.password}
                       </span>
                       <button
