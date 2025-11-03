@@ -141,14 +141,35 @@ function createWindow() {
     mainWindow.loadURL(PRODUCTION_URL);
   }
 
-  // Prevent navigation away from the app
+  // Log finished loads (URL) for debugging
+  mainWindow.webContents.on("did-finish-load", () => {
+    try {
+      const loadedUrl = mainWindow.webContents.getURL();
+      console.log("✅ Renderer finished loading URL:", loadedUrl);
+    } catch (err) {
+      console.error("Error getting loaded URL:", err);
+    }
+  });
+
+  // Prevent navigation away from the app (and log details)
   mainWindow.webContents.on("will-navigate", (event, url) => {
     const allowedOrigins = isDev
       ? [VITE_DEV_SERVER_URL, PRODUCTION_URL]
       : [PRODUCTION_URL];
 
-    const urlOrigin = new URL(url).origin;
-    if (!allowedOrigins.some((origin) => url.startsWith(origin))) {
+    let urlOrigin = "(invalid)";
+    try {
+      urlOrigin = new URL(url).origin;
+    } catch (e) {
+      // ignore
+    }
+
+    const allowed = allowedOrigins.some((origin) => url.startsWith(origin));
+    console.log("🔍 will-navigate -> url:", url);
+    console.log("🔍 will-navigate -> origin:", urlOrigin);
+    console.log("🔍 allowedOrigins:", allowedOrigins, "allowed:", allowed);
+
+    if (!allowed) {
       event.preventDefault();
       console.log("🚫 Navigation blocked:", url);
     }
