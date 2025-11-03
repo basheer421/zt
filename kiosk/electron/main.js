@@ -15,11 +15,6 @@ process.on("unhandledRejection", (reason, promise) => {
 // Disable GPU acceleration to fix graphics errors on Linux/VM
 app.disableHardwareAcceleration();
 
-// Additional flags for VM/X11 compatibility
-app.commandLine.appendSwitch("disable-software-rasterizer");
-app.commandLine.appendSwitch("disable-gpu-compositing");
-app.commandLine.appendSwitch("no-sandbox");
-
 // Environment detection
 const isDev = false;
 const PRODUCTION_URL = "https://zt-two.vercel.app";
