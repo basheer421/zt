@@ -2,7 +2,7 @@ const { app, BrowserWindow, globalShortcut } = require("electron");
 const path = require("path");
 
 // Environment detection
-const isDev = process.env.NODE_ENV === "development";
+const isDev = false;
 const PRODUCTION_URL = "https://zt-two.vercel.app";
 const VITE_DEV_SERVER_URL = "http://localhost:5173";
 
