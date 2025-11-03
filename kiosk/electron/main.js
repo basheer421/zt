@@ -1,8 +1,13 @@
 const { app, BrowserWindow, globalShortcut } = require("electron");
 const path = require("path");
 
-// Disable GPU acceleration to fix graphics errors on Linux
+// Disable GPU acceleration to fix graphics errors on Linux/VM
 app.disableHardwareAcceleration();
+
+// Additional flags for VM/X11 compatibility
+app.commandLine.appendSwitch("disable-software-rasterizer");
+app.commandLine.appendSwitch("disable-gpu-compositing");
+app.commandLine.appendSwitch("no-sandbox");
 
 // Environment detection
 const isDev = false;
@@ -120,6 +125,10 @@ function createWindow() {
     // Hide menu bar
     autoHideMenuBar: true,
 
+    // Show window to prevent white screen
+    show: true,
+    backgroundColor: "#ffffff",
+
     // Security settings
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -128,6 +137,7 @@ function createWindow() {
       devTools: true, // Always enable for debugging (was: isDev)
       webSecurity: false, // Disable to allow API calls (was: true)
       allowRunningInsecureContent: true, // Allow HTTP API calls (was: false)
+      hardwareAcceleration: false, // Explicitly disable in webPreferences too
     },
   });
 
