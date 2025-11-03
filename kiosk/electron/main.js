@@ -139,6 +139,7 @@ function createWindow() {
   } else {
     // Production: Load from deployed Vercel app
     mainWindow.loadURL(PRODUCTION_URL);
+    mainWindow.webContents.openDevTools(); // Enable DevTools in production for debugging
   }
 
   // Log finished loads (URL) for debugging
@@ -152,10 +153,13 @@ function createWindow() {
   });
 
   // Prevent navigation away from the app (and log details)
+  // Allow AAU redirect after successful login
   mainWindow.webContents.on("will-navigate", (event, url) => {
-    const allowedOrigins = isDev
-      ? [VITE_DEV_SERVER_URL, PRODUCTION_URL]
-      : [PRODUCTION_URL];
+    const allowedOrigins = [
+      VITE_DEV_SERVER_URL,
+      PRODUCTION_URL,
+      "https://aau.ac.ae", // Allow AAU redirect after login
+    ];
 
     let urlOrigin = "(invalid)";
     try {
@@ -172,6 +176,8 @@ function createWindow() {
     if (!allowed) {
       event.preventDefault();
       console.log("🚫 Navigation blocked:", url);
+    } else {
+      console.log("✅ Navigation allowed:", url);
     }
   });
 
@@ -240,20 +246,37 @@ app.on("will-quit", () => {
  */
 app.on("web-contents-created", (event, contents) => {
   contents.on("will-navigate", (event, navigationUrl) => {
-    const parsedUrl = new URL(navigationUrl);
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(navigationUrl);
+    } catch (e) {
+      console.error("Invalid URL in will-navigate:", navigationUrl);
+      return;
+    }
 
-    // Allow dev server, production URL, and file protocol
-    const allowedOrigins = isDev
-      ? [VITE_DEV_SERVER_URL, PRODUCTION_URL]
-      : [PRODUCTION_URL];
+    // Allow dev server, production URL, AAU, and file protocol
+    const allowedOrigins = [
+      VITE_DEV_SERVER_URL,
+      PRODUCTION_URL,
+      "https://aau.ac.ae", // Allow AAU redirect after login
+    ];
 
     const isAllowed =
       allowedOrigins.some((origin) => navigationUrl.startsWith(origin)) ||
       parsedUrl.protocol.startsWith("file");
 
+    console.log(
+      "🔍 web-contents will-navigate:",
+      navigationUrl,
+      "allowed:",
+      isAllowed
+    );
+
     if (!isAllowed) {
       event.preventDefault();
       console.log("🚫 Remote navigation blocked:", navigationUrl);
+    } else {
+      console.log("✅ Remote navigation allowed:", navigationUrl);
     }
   });
 });
