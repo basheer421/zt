@@ -1,6 +1,21 @@
 const { app, BrowserWindow, globalShortcut } = require("electron");
 const path = require("path");
 
+// ============================================================================
+// CRITICAL ERROR HANDLING - Catch all uncaught exceptions
+// ============================================================================
+process.on("uncaughtException", function (err) {
+  console.error("💥 UNCAUGHT EXCEPTION IN MAIN PROCESS:");
+  console.error("Error:", err);
+  console.error("Stack:", err.stack);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("💥 UNHANDLED PROMISE REJECTION IN MAIN PROCESS:");
+  console.error("Promise:", promise);
+  console.error("Reason:", reason);
+});
+
 // Disable GPU acceleration to fix graphics errors on Linux/VM
 app.disableHardwareAcceleration();
 
@@ -111,35 +126,43 @@ function unregisterGlobalShortcuts() {
  * Create the main application window
  */
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    // Kiosk mode configuration
-    fullscreen: true,
-    kiosk: true, // True kiosk mode
-    alwaysOnTop: true,
-    frame: false, // No window frame
+  try {
+    mainWindow = new BrowserWindow({
+      // Kiosk mode configuration
+      fullscreen: true,
+      kiosk: true, // True kiosk mode
+      alwaysOnTop: true,
+      frame: false, // No window frame
 
-    // Window properties
-    width: 1920,
-    height: 1080,
+      // Window properties
+      width: 1920,
+      height: 1080,
 
-    // Hide menu bar
-    autoHideMenuBar: true,
+      // Hide menu bar
+      autoHideMenuBar: true,
 
-    // Show window to prevent white screen
-    show: true,
-    backgroundColor: "#ffffff",
+      // Show window to prevent white screen
+      show: true,
+      backgroundColor: "#ffffff",
 
-    // Security settings
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      nodeIntegration: false, // Security best practice
-      contextIsolation: true, // Security best practice
-      devTools: true, // Always enable for debugging (was: isDev)
-      webSecurity: false, // Disable to allow API calls (was: true)
-      allowRunningInsecureContent: true, // Allow HTTP API calls (was: false)
-      hardwareAcceleration: false, // Explicitly disable in webPreferences too
-    },
-  });
+      // Security settings
+      webPreferences: {
+        preload: path.join(__dirname, "preload.js"),
+        nodeIntegration: false, // Security best practice
+        contextIsolation: true, // Security best practice
+        devTools: true, // Always enable for debugging (was: isDev)
+        webSecurity: false, // Disable to allow API calls (was: true)
+        allowRunningInsecureContent: true, // Allow HTTP API calls (was: false)
+        hardwareAcceleration: false, // Explicitly disable in webPreferences too
+      },
+    });
+    console.log("✅ BrowserWindow created successfully");
+  } catch (error) {
+    console.error("💥 ERROR creating BrowserWindow:");
+    console.error("Error:", error);
+    console.error("Stack:", error.stack);
+    throw error; // Re-throw to be caught by caller
+  }
 
   // Prevent window from being closed
   mainWindow.on("close", (event) => {
@@ -150,14 +173,22 @@ function createWindow() {
   });
 
   // Load the app
-  if (isDev) {
-    // Development: Load from Vite dev server
-    mainWindow.loadURL(VITE_DEV_SERVER_URL);
-    mainWindow.webContents.openDevTools(); // Open DevTools in dev mode
-  } else {
-    // Production: Load from deployed Vercel app
-    mainWindow.loadURL(PRODUCTION_URL);
-    mainWindow.webContents.openDevTools(); // Enable DevTools in production for debugging
+  try {
+    if (isDev) {
+      // Development: Load from Vite dev server
+      console.log("📡 Loading development server:", VITE_DEV_SERVER_URL);
+      mainWindow.loadURL(VITE_DEV_SERVER_URL);
+      mainWindow.webContents.openDevTools(); // Open DevTools in dev mode
+    } else {
+      // Production: Load from deployed Vercel app
+      console.log("📡 Loading production URL:", PRODUCTION_URL);
+      mainWindow.loadURL(PRODUCTION_URL);
+      mainWindow.webContents.openDevTools(); // Enable DevTools in production for debugging
+    }
+  } catch (error) {
+    console.error("💥 ERROR loading URL:");
+    console.error("Error:", error);
+    console.error("Stack:", error.stack);
   }
 
   // Log finished loads (URL) for debugging
@@ -166,9 +197,19 @@ function createWindow() {
       const loadedUrl = mainWindow.webContents.getURL();
       console.log("✅ Renderer finished loading URL:", loadedUrl);
     } catch (err) {
-      console.error("Error getting loaded URL:", err);
+      console.error("💥 Error getting loaded URL:", err);
     }
   });
+
+  // Log failed loads
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (event, errorCode, errorDescription, validatedURL) => {
+      console.error("💥 FAILED TO LOAD URL:", validatedURL);
+      console.error("Error code:", errorCode);
+      console.error("Error description:", errorDescription);
+    }
+  );
 
   // Prevent navigation away from the app (and log details)
   // Allow AAU redirect after successful login
@@ -220,8 +261,23 @@ function createWindow() {
     }
   );
 
+  // CRITICAL: Handle renderer process crashes - relaunch app automatically
   mainWindow.webContents.on("render-process-gone", (event, details) => {
-    console.error("💥 Renderer crashed:", details);
+    console.error("💥 RENDERER PROCESS CRASHED!");
+    console.error("Reason:", details.reason);
+    console.error("Exit code:", details.exitCode);
+
+    if (details.reason === "crashed") {
+      console.error("🔄 Renderer crashed - relaunching app...");
+      // Relaunch the app
+      app.relaunch({ args: process.argv.slice(1).concat(["--relaunch"]) });
+      app.exit(0);
+    } else {
+      console.error(
+        "⚠️  Renderer process gone for unknown reason:",
+        details.reason
+      );
+    }
   });
 
   console.log("✅ Kiosk window created");
@@ -230,17 +286,37 @@ function createWindow() {
 /**
  * App lifecycle: Ready
  */
-app.whenReady().then(() => {
-  createWindow();
-  registerGlobalShortcuts();
-
-  // macOS: Re-create window when dock icon is clicked
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+app
+  .whenReady()
+  .then(() => {
+    try {
+      console.log("📦 App is ready, creating window...");
       createWindow();
+      console.log("🔐 Registering global shortcuts...");
+      registerGlobalShortcuts();
+    } catch (error) {
+      console.error("💥 ERROR during app initialization:");
+      console.error("Error:", error);
+      console.error("Stack:", error.stack);
+      // Don't exit - try to continue
     }
+
+    // macOS: Re-create window when dock icon is clicked
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        try {
+          createWindow();
+        } catch (error) {
+          console.error("💥 ERROR recreating window:", error);
+        }
+      }
+    });
+  })
+  .catch((error) => {
+    console.error("💥 FATAL ERROR: App failed to initialize:");
+    console.error("Error:", error);
+    console.error("Stack:", error.stack);
   });
-});
 
 /**
  * App lifecycle: All windows closed
