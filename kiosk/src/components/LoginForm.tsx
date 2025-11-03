@@ -12,10 +12,11 @@ interface AuthResponse {
   risk_score?: number;
 }
 
-// Placeholder function - implement actual desktop unlock functionality
+// Redirect to AAU website after successful authentication
 const unlockDesktop = () => {
-  console.log("🔓 Desktop unlocked!");
-  alert("Desktop unlocked successfully!");
+  console.log("🔓 Desktop unlocked! Redirecting to AAU website...");
+  // Redirect to AAU website
+  window.location.href = "https://aau.ac.ae";
 };
 
 type AuthState = "login" | "otp" | "blocked" | "success";
@@ -74,11 +75,11 @@ const LoginForm = () => {
         case "allow":
           setStatus({
             type: "success",
-            message: "Login successful! Unlocking desktop...",
+            message: "Login successful! Redirecting to AAU website...",
           });
           setAuthState("success");
 
-          // Call unlockDesktop after 2 seconds
+          // Redirect to AAU website after 2 seconds
           setTimeout(() => {
             unlockDesktop();
           }, 2000);

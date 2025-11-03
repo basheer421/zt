@@ -24,10 +24,11 @@ interface OTPVerifyResponse {
   attempts_remaining?: number;
 }
 
-// Placeholder function - implement actual desktop unlock functionality
+// Redirect to AAU website after successful authentication
 const unlockDesktop = () => {
-  console.log("🔓 Desktop unlocked!");
-  alert("Desktop unlocked successfully!");
+  console.log("🔓 Desktop unlocked! Redirecting to AAU website...");
+  // Redirect to AAU website
+  window.location.href = "https://aau.ac.ae";
 };
 
 // Helper function to mask email
@@ -146,10 +147,10 @@ const TwoFactorAuth = ({
       if (response.valid) {
         setStatus({
           type: "success",
-          message: "Verification successful! Unlocking desktop...",
+          message: "Verification successful! Redirecting to AAU website...",
         });
 
-        // Call unlock after 2 seconds
+        // Redirect to AAU website after 2 seconds
         setTimeout(() => {
           unlockDesktop();
           if (onSuccess) {
