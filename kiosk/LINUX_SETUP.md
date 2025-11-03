@@ -2,6 +2,96 @@
 
 This guide covers setting up the Zero Trust Kiosk on Ubuntu/Linux with Openbox for true kiosk mode.
 
+## VirtualBox Setup (If Running in VM)
+
+**IMPORTANT**: If running in VirtualBox, configure these settings BEFORE starting the VM to avoid GPU/graphics errors and white screen issues.
+
+### Required VirtualBox Settings
+
+1. **Enable 3D Acceleration** (CRITICAL)
+
+   ```
+   Settings → Display → Screen
+   ☑ Enable 3D Acceleration
+   ☑ Enable 2D Video Acceleration
+   Video Memory: 128 MB (maximum)
+   Graphics Controller: VMSVGA (or VBoxSVGA for better Linux support)
+   ```
+
+2. **Processor Configuration**
+
+   ```
+   Settings → System → Processor
+   CPUs: At least 2 CPUs
+   ☑ Enable PAE/NX
+   ```
+
+3. **Increase Base Memory**
+
+   ```
+   Settings → System → Motherboard
+   Base Memory: At least 2048 MB (4096 MB recommended for Electron apps)
+   ```
+
+4. **Enable Integration Features**
+   ```
+   Settings → General → Advanced
+   Shared Clipboard: Bidirectional
+   Drag'n'Drop: Bidirectional
+   ```
+
+### Install VirtualBox Guest Additions (CRITICAL)
+
+After starting the VM, install Guest Additions for proper graphics drivers:
+
+```bash
+# Install Guest Additions packages
+sudo apt update
+sudo apt install -y virtualbox-guest-dkms virtualbox-guest-utils virtualbox-guest-x11
+
+# Add user to video group
+sudo usermod -aG video $USER
+
+# Fix X11 permissions for Electron
+xhost +local:
+
+# Reboot to apply all changes
+sudo reboot
+```
+
+**Why Guest Additions?** They provide proper GPU drivers that fix:
+
+- `Failed to load GLES library: Permission denied` errors
+- `Authorization required, but no authorization protocol specified` errors
+- Renderer process crashes causing white screen
+- GPU initialization failures
+
+### Troubleshooting VM Graphics Issues
+
+If you see errors like:
+
+```
+Failed to load GLES library: libGLESv2.so: Permission denied
+Exiting GPU process due to errors during initialization
+```
+
+Run these commands:
+
+```bash
+# 1. Verify Guest Additions are installed
+lsmod | grep vbox
+
+# 2. Reinstall if needed
+sudo apt install --reinstall virtualbox-guest-x11
+
+# 3. Fix permissions
+sudo usermod -aG video $USER
+xhost +local:
+
+# 4. Reboot
+sudo reboot
+```
+
 ## Quick Start
 
 ### 1. Install Dependencies
