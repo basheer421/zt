@@ -117,9 +117,9 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false, // Security best practice
       contextIsolation: true, // Security best practice
-      devTools: isDev, // Only allow DevTools in development
-      webSecurity: true,
-      allowRunningInsecureContent: false,
+      devTools: true, // Always enable for debugging (was: isDev)
+      webSecurity: false, // Disable to allow API calls (was: true)
+      allowRunningInsecureContent: true, // Allow HTTP API calls (was: false)
     },
   });
 
@@ -158,6 +158,25 @@ function createWindow() {
   mainWindow.webContents.setWindowOpenHandler(() => {
     console.log("🚫 New window blocked");
     return { action: "deny" };
+  });
+
+  // Add error logging for debugging
+  mainWindow.webContents.on(
+    "did-fail-load",
+    (event, errorCode, errorDescription) => {
+      console.error("❌ Failed to load:", errorCode, errorDescription);
+    }
+  );
+
+  mainWindow.webContents.on(
+    "console-message",
+    (event, level, message, line, sourceId) => {
+      console.log("📝 Console:", message);
+    }
+  );
+
+  mainWindow.webContents.on("render-process-gone", (event, details) => {
+    console.error("💥 Renderer crashed:", details);
   });
 
   console.log("✅ Kiosk window created");
