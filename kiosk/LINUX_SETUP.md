@@ -63,19 +63,37 @@ sudo reboot
 
 - `Failed to load GLES library: Permission denied` errors
 - `Authorization required, but no authorization protocol specified` errors
+- `XGetWindowAttributes failed for window` errors
 - Renderer process crashes causing white screen
 - GPU initialization failures
 
 ### Troubleshooting VM Graphics Issues
 
-If you see errors like:
+**Error: `XGetWindowAttributes failed for window`**
 
-```
-Failed to load GLES library: libGLESv2.so: Permission denied
-Exiting GPU process due to errors during initialization
+This X11 error indicates the window system can't access window properties. Fixes:
+
+```bash
+# Fix 1: Install/reinstall Guest Additions with X11 support
+sudo apt update
+sudo apt install --reinstall virtualbox-guest-x11 virtualbox-guest-utils
+
+# Fix 2: Grant X11 access
+xhost +local:
+
+# Fix 3: Verify X11 is running properly
+echo $DISPLAY  # Should show :0 or :1
+
+# Fix 4: If DISPLAY is empty, set it
+export DISPLAY=:0
+
+# Fix 5: Restart X11/GNOME session (or just reboot)
+sudo systemctl restart gdm3  # For GNOME
+# OR
+sudo reboot
 ```
 
-Run these commands:
+**Error: `Failed to load GLES library: Permission denied`**
 
 ```bash
 # 1. Verify Guest Additions are installed
