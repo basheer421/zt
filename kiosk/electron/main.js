@@ -1,6 +1,9 @@
 const { app, BrowserWindow, globalShortcut } = require("electron");
 const path = require("path");
 
+// Disable GPU acceleration to fix graphics errors on Linux
+app.disableHardwareAcceleration();
+
 // Environment detection
 const isDev = false;
 const PRODUCTION_URL = "https://zt-two.vercel.app";
@@ -36,10 +39,15 @@ function registerGlobalShortcuts() {
   });
 
   // Block Super/Windows key (Linux/Windows)
-  globalShortcut.register("Super", () => {
-    console.log("🚫 Blocked: Super/Windows key");
-    return false;
-  });
+  // Note: "Super" doesn't work on all platforms, try "Meta" or skip
+  try {
+    globalShortcut.register("Meta", () => {
+      console.log("🚫 Blocked: Meta/Super key");
+      return false;
+    });
+  } catch (e) {
+    console.log("⚠️  Could not register Meta/Super key:", e.message);
+  }
 
   // Block Ctrl+Alt+Delete (security screen)
   globalShortcut.register("Ctrl+Alt+Delete", () => {
