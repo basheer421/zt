@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface UserContextType {
   username: string | null;
@@ -10,8 +10,15 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [username, setUsername] = useState<string | null>(null);
-  const [role, setRole] = useState<"admin" | "manager" | "viewer" | null>(null);
+  const [username, setUsername] = useState<string | null>(() => {
+    return localStorage.getItem("username");
+  });
+  const [role, setRole] = useState<"admin" | "manager" | "viewer" | null>(
+    () => {
+      const storedRole = localStorage.getItem("role");
+      return storedRole as "admin" | "manager" | "viewer" | null;
+    }
+  );
 
   const setUser = (
     newUsername: string,
@@ -19,11 +26,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
   ) => {
     setUsername(newUsername);
     setRole(newRole);
+    localStorage.setItem("username", newUsername);
+    localStorage.setItem("role", newRole);
   };
 
   const clearUser = () => {
     setUsername(null);
     setRole(null);
+    localStorage.removeItem("username");
+    localStorage.removeItem("role");
   };
 
   return (
