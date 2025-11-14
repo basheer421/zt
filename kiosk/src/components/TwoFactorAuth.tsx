@@ -24,13 +24,6 @@ interface OTPVerifyResponse {
   attempts_remaining?: number;
 }
 
-// Redirect to AAU website after successful authentication
-const unlockDesktop = () => {
-  console.log("🔓 Desktop unlocked! Redirecting to AAU website...");
-  // Redirect to AAU website
-  window.location.href = "https://aau.ac.ae";
-};
-
 // Helper function to mask email
 const maskEmail = (email: string): string => {
   const [localPart, domain] = email.split("@");
@@ -147,12 +140,11 @@ const TwoFactorAuth = ({
       if (response.valid) {
         setStatus({
           type: "success",
-          message: "Verification successful! Redirecting to AAU website...",
+          message: "Verification successful! Redirecting to inventory...",
         });
 
-        // Redirect to AAU website after 2 seconds
+        // Redirect after 2 seconds
         setTimeout(() => {
-          unlockDesktop();
           if (onSuccess) {
             onSuccess();
           }

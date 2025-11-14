@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./Button";
 import { api } from "../utils/api";
 import TwoFactorAuth from "./TwoFactorAuth.js";
@@ -12,16 +13,10 @@ interface AuthResponse {
   risk_score?: number;
 }
 
-// Redirect to AAU website after successful authentication
-const unlockDesktop = () => {
-  console.log("🔓 Desktop unlocked! Redirecting to AAU website...");
-  // Redirect to AAU website
-  window.location.href = "https://aau.ac.ae";
-};
-
 type AuthState = "login" | "otp" | "blocked" | "success";
 
 const LoginForm = () => {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<{
@@ -75,13 +70,13 @@ const LoginForm = () => {
         case "allow":
           setStatus({
             type: "success",
-            message: "Login successful! Redirecting to AAU website...",
+            message: "Login successful! Redirecting to inventory...",
           });
           setAuthState("success");
 
-          // Redirect to AAU website after 2 seconds
+          // Redirect to inventory after 2 seconds
           setTimeout(() => {
-            unlockDesktop();
+            navigate("/inventory");
           }, 2000);
           break;
 
@@ -139,7 +134,7 @@ const LoginForm = () => {
         onBack={() => setAuthState("login")}
         onSuccess={() => {
           setAuthState("success");
-          unlockDesktop();
+          navigate("/inventory");
         }}
         onBlocked={(score, reason) => {
           setRiskScore(score);

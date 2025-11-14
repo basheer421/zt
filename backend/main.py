@@ -18,6 +18,7 @@ from database import (
 from ml_engine_uae import predict_risk_hybrid as predict_risk
 from otp import create_otp_challenge, verify_otp as otp_verify, get_otp_status
 from admin_routes import router as admin_router
+from inventory_routes import router as inventory_router
 
 # ============================================================================
 # PYDANTIC MODELS
@@ -98,6 +99,9 @@ app.add_middleware(
 
 # Include admin routes
 app.include_router(admin_router)
+
+# Include inventory routes
+app.include_router(inventory_router)
 
 # ============================================================================
 # ENDPOINTS

@@ -1,4 +1,6 @@
+import { Routes, Route } from "react-router-dom";
 import { LoginForm } from "./components";
+import Inventory from "./pages/Inventory";
 
 /**
  * Main App Component
@@ -7,7 +9,12 @@ import { LoginForm } from "./components";
  * Usernames: john_doe, jane_smith, bob_jones, alice_admin, test_user
  */
 function App() {
-  return <LoginForm />;
+  return (
+    <Routes>
+      <Route path="/" element={<LoginForm />} />
+      <Route path="/inventory" element={<Inventory />} />
+    </Routes>
+  );
 }
 
 export default App;
