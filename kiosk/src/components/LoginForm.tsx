@@ -60,8 +60,7 @@ const LoginForm = () => {
         password,
         timestamp,
         device_fingerprint: deviceFingerprint,
-        ip_address: "192.168.1.1", // Hardcoded for now
-        location: "New York", // Hardcoded for now
+        // IP and location will be auto-detected by backend from request headers
       };
 
       // POST to backend

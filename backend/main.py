@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
@@ -29,8 +29,8 @@ class AuthenticateRequest(BaseModel):
     password: str = Field(..., description="Password")
     timestamp: str = Field(..., description="Login timestamp")
     device_fingerprint: str = Field(..., description="Unique device identifier")
-    ip_address: str = Field(..., description="Client IP address")
-    location: Optional[str] = Field(None, description="Geographic location")
+    ip_address: Optional[str] = Field(None, description="Client IP address (auto-detected if not provided)")
+    location: Optional[str] = Field(None, description="Geographic location (auto-detected if not provided)")
 
 class AuthenticateResponse(BaseModel):
     status: str = Field(..., description="Authentication status: success or invalid_credentials")
@@ -117,7 +117,7 @@ async def health_check():
     return {"status": "ok"}
 
 @app.post("/api/authenticate", response_model=AuthenticateResponse, tags=["Authentication"])
-async def authenticate(request: AuthenticateRequest):
+async def authenticate(auth_request: AuthenticateRequest, http_request: Request):
     """
     Authenticate a user with username and password
     
@@ -127,22 +127,44 @@ async def authenticate(request: AuthenticateRequest):
     3. Returns success or invalid_credentials status
     
     Args:
-        request: Authentication request with credentials and device info
+        auth_request: Authentication request with credentials and device info
+        http_request: FastAPI Request object for accessing headers
     
     Returns:
         Authentication response with status and optional risk score
     """
     try:
+        # Auto-detect IP address from headers if not provided
+        client_ip = auth_request.ip_address
+        if not client_ip:
+            # Try X-Forwarded-For first (for proxies/load balancers)
+            client_ip = http_request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+            # Fall back to X-Real-IP
+            if not client_ip:
+                client_ip = http_request.headers.get("X-Real-IP", "")
+            # Fall back to direct client
+            if not client_ip and http_request.client:
+                client_ip = http_request.client.host
+            # Default fallback
+            if not client_ip:
+                client_ip = "unknown"
+        
+        # Auto-detect location from IP if not provided
+        location = auth_request.location
+        if not location and client_ip and client_ip != "unknown":
+            # For now, set to UAE if IP is detected (can be enhanced with IP geolocation service)
+            location = "Dubai, AE"
+        
         # Get user from database
-        user = get_user(request.username)
+        user = get_user(auth_request.username)
         
         if not user:
             # Log failed attempt - user not found
             log_login_attempt(
-                username=request.username,
-                ip_address=request.ip_address,
-                device_fingerprint=request.device_fingerprint,
-                location=request.location,
+                username=auth_request.username,
+                ip_address=client_ip,
+                device_fingerprint=auth_request.device_fingerprint,
+                location=location,
                 risk_score=None,
                 action="deny",
                 success=False
@@ -156,10 +178,10 @@ async def authenticate(request: AuthenticateRequest):
         # Check if user account is active
         if user['status'] != 'active':
             log_login_attempt(
-                username=request.username,
-                ip_address=request.ip_address,
-                device_fingerprint=request.device_fingerprint,
-                location=request.location,
+                username=auth_request.username,
+                ip_address=client_ip,
+                device_fingerprint=auth_request.device_fingerprint,
+                location=location,
                 risk_score=None,
                 action="deny",
                 success=False
@@ -172,17 +194,17 @@ async def authenticate(request: AuthenticateRequest):
         
         # Verify password with bcrypt
         password_match = bcrypt.checkpw(
-            request.password.encode('utf-8'),
+            auth_request.password.encode('utf-8'),
             user['password_hash'].encode('utf-8')
         )
         
         if not password_match:
             # Log failed attempt - wrong password
             log_login_attempt(
-                username=request.username,
-                ip_address=request.ip_address,
-                device_fingerprint=request.device_fingerprint,
-                location=request.location,
+                username=auth_request.username,
+                ip_address=client_ip,
+                device_fingerprint=auth_request.device_fingerprint,
+                location=location,
                 risk_score=None,
                 action="deny",
                 success=False
@@ -195,22 +217,22 @@ async def authenticate(request: AuthenticateRequest):
         
         # Password is correct - use ML to assess risk
         # Prepare login data for UAE ML engine
-        # Parse location to get country (format: "City, Country")
+        # Parse location to get country (format: "City, Country" or "City, XX")
         country = 'XX'
-        if request.location:
-            parts = request.location.split(',')
+        if location:
+            parts = location.split(',')
             if len(parts) >= 2:
                 country = parts[-1].strip()[:2].upper()
         
         login_data = {
-            'ip_address': request.ip_address,
+            'ip_address': client_ip,
             'country': country,
             'asn': 0,  # Unknown ASN (could be enhanced with IP lookup)
             'device_type': 'desktop',  # Could be enhanced with device fingerprint parsing
             'user_agent': 'Unknown',  # Should be added to AuthenticateRequest if available
             'browser': 'Unknown',
             'os': 'Unknown',
-            'timestamp': request.timestamp
+            'timestamp': auth_request.timestamp
         }
         
         # HARDCODED DEMO USERS - Override ML predictions for demo purposes
@@ -221,9 +243,9 @@ async def authenticate(request: AuthenticateRequest):
             'red_user': 85      # High risk - RED (70-100)
         }
         
-        if request.username in DEMO_USERS:
+        if auth_request.username in DEMO_USERS:
             # Use hardcoded risk score for demo users
-            ml_risk_score = DEMO_USERS[request.username]
+            ml_risk_score = DEMO_USERS[auth_request.username]
             risk_assessment = {
                 'risk_score': ml_risk_score,
                 'risk_level': 'low' if ml_risk_score < 30 else 'medium' if ml_risk_score < 70 else 'high',
@@ -231,7 +253,7 @@ async def authenticate(request: AuthenticateRequest):
             }
         else:
             # Get ML-based risk assessment for regular users
-            risk_assessment = predict_risk(request.username, login_data)
+            risk_assessment = predict_risk(auth_request.username, login_data)
             ml_risk_score = risk_assessment['risk_score']  # Keep original 0-100 score
         
         risk_score = ml_risk_score / 100.0  # Convert 0-100 to 0-1 for compatibility
@@ -240,7 +262,7 @@ async def authenticate(request: AuthenticateRequest):
         # High risk (70+) = Require 2FA
         # Medium risk (30-70) = Require 2FA for unknown devices
         # Low risk (<30) = Allow direct login
-        device_known = is_known_device(request.username, request.device_fingerprint)
+        device_known = is_known_device(auth_request.username, auth_request.device_fingerprint)
         
         if ml_risk_score >= 70:
             # High risk - always require 2FA
@@ -255,10 +277,10 @@ async def authenticate(request: AuthenticateRequest):
         if require_2fa:
             # Return OTP challenge instead of allowing direct login
             log_login_attempt(
-                username=request.username,
-                ip_address=request.ip_address,
-                device_fingerprint=request.device_fingerprint,
-                location=request.location,
+                username=auth_request.username,
+                ip_address=client_ip,
+                device_fingerprint=auth_request.device_fingerprint,
+                location=location,
                 risk_score=risk_score,
                 action="challenge",
                 success=False
@@ -267,19 +289,20 @@ async def authenticate(request: AuthenticateRequest):
             return AuthenticateResponse(
                 status="otp",
                 message="Two-factor authentication required",
-                username=request.username,
-                risk_score=risk_score
+                username=auth_request.username,
+                risk_score=risk_score,
+                role=user.get('role', 'viewer')
             )
         
         # Register/update device
-        register_device(request.username, request.device_fingerprint)
+        register_device(auth_request.username, auth_request.device_fingerprint)
         
         # Log successful attempt
         log_login_attempt(
-            username=request.username,
-            ip_address=request.ip_address,
-            device_fingerprint=request.device_fingerprint,
-            location=request.location,
+            username=auth_request.username,
+            ip_address=client_ip,
+            device_fingerprint=auth_request.device_fingerprint,
+            location=location,
             risk_score=risk_score,
             action="allow",
             success=True
@@ -288,7 +311,7 @@ async def authenticate(request: AuthenticateRequest):
         return AuthenticateResponse(
             status="success",
             message="Authentication successful",
-            username=request.username,
+            username=auth_request.username,
             risk_score=risk_score,
             role=user.get('role', 'viewer')  # Include user role in response
         )
