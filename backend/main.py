@@ -37,6 +37,7 @@ class AuthenticateResponse(BaseModel):
     message: str = Field(..., description="Status message")
     username: Optional[str] = Field(None, description="Username if successful")
     risk_score: Optional[float] = Field(None, description="Risk score from ML model")
+    role: Optional[str] = Field(None, description="User role (admin, manager, viewer)")
 
 class HealthResponse(BaseModel):
     status: str = Field(..., description="Health status")
@@ -288,7 +289,8 @@ async def authenticate(request: AuthenticateRequest):
             status="success",
             message="Authentication successful",
             username=request.username,
-            risk_score=risk_score
+            risk_score=risk_score,
+            role=user.get('role', 'viewer')  # Include user role in response
         )
         
     except Exception as e:

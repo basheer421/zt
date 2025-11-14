@@ -5,8 +5,9 @@ import { api } from "../utils/api";
 
 interface TwoFactorAuthProps {
   username: string;
+  role?: "admin" | "manager" | "viewer";
   onBack?: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (role: "admin" | "manager" | "viewer") => void;
   onBlocked?: (riskScore: number, reason: string) => void;
 }
 
@@ -36,11 +37,13 @@ const maskEmail = (email: string): string => {
 
 const TwoFactorAuth = ({
   username,
+  role = "viewer",
   onBack,
   onSuccess,
   onBlocked,
 }: TwoFactorAuthProps) => {
   const [otpCode, setOtpCode] = useState("");
+  const [userRole] = useState<"admin" | "manager" | "viewer">(role);
   const [maskedEmail, setMaskedEmail] = useState<string>("");
   const [status, setStatus] = useState<{
     type: "idle" | "loading" | "success" | "error";
@@ -146,7 +149,7 @@ const TwoFactorAuth = ({
         // Redirect after 2 seconds
         setTimeout(() => {
           if (onSuccess) {
-            onSuccess();
+            onSuccess(userRole);
           }
         }, 2000);
       } else {

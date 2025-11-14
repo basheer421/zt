@@ -56,8 +56,12 @@ export const usersAPI = {
 
   getById: (id: number) => api.get<User>(`/admin/users/${id}`),
 
-  create: (data: { username: string; password: string; email: string }) =>
-    api.post<CreateUserResponse>("/admin/users", data),
+  create: (data: {
+    username: string;
+    password: string;
+    email: string;
+    role?: string;
+  }) => api.post<CreateUserResponse>("/admin/users", data),
 
   update: (id: number, data: Partial<User>) =>
     api.put<User>(`/admin/users/${id}`, data),
@@ -66,6 +70,9 @@ export const usersAPI = {
 
   updateStatus: (id: number, status: string) =>
     api.patch(`/admin/users/${id}/status`, { status }),
+
+  updateRole: (id: number, role: string) =>
+    api.patch(`/admin/users/${id}/role`, { role }),
 };
 
 // Login Attempts APIs

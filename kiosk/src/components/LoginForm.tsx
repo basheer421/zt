@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./Button";
 import { api } from "../utils/api";
+import { useUser } from "../contexts/UserContext";
 import TwoFactorAuth from "./TwoFactorAuth.js";
 import BlockedScreen from "./BlockedScreen.js";
 
@@ -11,12 +12,14 @@ interface AuthResponse {
   message: string;
   username?: string;
   risk_score?: number;
+  role?: "admin" | "manager" | "viewer";
 }
 
 type AuthState = "login" | "otp" | "blocked" | "success";
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const { setUser } = useUser();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<{
@@ -26,6 +29,9 @@ const LoginForm = () => {
   const [authState, setAuthState] = useState<AuthState>("login");
   const [riskScore, setRiskScore] = useState<number>(0);
   const [blockReason, setBlockReason] = useState<string>("");
+  const [userRole, setUserRole] = useState<"admin" | "manager" | "viewer">(
+    "viewer"
+  );
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -74,6 +80,11 @@ const LoginForm = () => {
           });
           setAuthState("success");
 
+          // Store user info in context
+          if (response.username && response.role) {
+            setUser(response.username, response.role);
+          }
+
           // Redirect to inventory after 2 seconds
           setTimeout(() => {
             navigate("/inventory");
@@ -85,6 +96,10 @@ const LoginForm = () => {
             type: "success",
             message: "Two-factor authentication required",
           });
+          // Store role for later use
+          if (response.role) {
+            setUserRole(response.role);
+          }
           setAuthState("otp");
           break;
 
@@ -131,9 +146,11 @@ const LoginForm = () => {
     return (
       <TwoFactorAuth
         username={username}
+        role={userRole}
         onBack={() => setAuthState("login")}
-        onSuccess={() => {
+        onSuccess={(role: "admin" | "manager" | "viewer") => {
           setAuthState("success");
+          setUser(username, role);
           navigate("/inventory");
         }}
         onBlocked={(score, reason) => {

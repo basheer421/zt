@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "../components/Card";
+import { useUser } from "../contexts/UserContext";
+import { useNavigate } from "react-router-dom";
 
 interface InventoryItem {
   id: number;
@@ -17,6 +19,8 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const Inventory = () => {
+  const { username, role, clearUser } = useUser();
+  const navigate = useNavigate();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,10 +105,23 @@ const Inventory = () => {
               <h1 className="text-3xl font-bold text-gray-900">
                 Company X Inventory
               </h1>
-              <p className="text-sm text-gray-600 mt-1">View-only access</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {username && <span className="font-medium">{username}</span>}
+                {role && (
+                  <span className="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800 capitalize">
+                    {role} Access
+                  </span>
+                )}
+                {role === "viewer" && " • Read-only"}
+                {role === "manager" && " • Can edit inventory"}
+                {role === "admin" && " • Full access"}
+              </p>
             </div>
             <button
-              onClick={() => (window.location.href = "/")}
+              onClick={() => {
+                clearUser();
+                navigate("/");
+              }}
               className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
             >
               Logout

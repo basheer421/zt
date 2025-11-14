@@ -43,9 +43,13 @@ class CreateUserRequest(BaseModel):
     username: str
     password: str
     email: str
+    role: str = 'viewer'  # Default to viewer role
 
 class UpdateUserStatusRequest(BaseModel):
     status: str
+
+class UpdateUserRoleRequest(BaseModel):
+    role: str
 
 class CreateAdminRequest(BaseModel):
     username: str
@@ -170,19 +174,24 @@ async def create_new_user(
     if existing:
         raise HTTPException(status_code=400, detail="Username already exists")
     
+    # Validate role
+    if request.role not in ['admin', 'manager', 'viewer']:
+        raise HTTPException(status_code=400, detail="Invalid role. Must be: admin, manager, or viewer")
+    
     # Hash password
     password_hash = bcrypt.hashpw(
         request.password.encode('utf-8'),
         bcrypt.gensalt()
     ).decode('utf-8')
     
-    # Create user
-    user_id = create_user(request.username, password_hash, request.email, status='active')
+    # Create user with role
+    user_id = create_user(request.username, password_hash, request.email, role=request.role, status='active')
     
     return {
         "id": user_id,
         "username": request.username,
         "email": request.email,
+        "role": request.role,
         "password": request.password,  # Return plain password so admin can share it
         "status": "active",
         "message": "User created successfully. Share these credentials with the user."
@@ -206,6 +215,28 @@ async def update_user_status_endpoint(
     execute_update(query, (request.status, user_id))
     
     return {"success": True, "message": "User status updated"}
+
+@router.patch("/users/{user_id}/role")
+async def update_user_role_endpoint(
+    user_id: int,
+    request: UpdateUserRoleRequest,
+    admin_username: str = Depends(verify_admin_token)
+):
+    """Update user role"""
+    from database import get_user_by_id, update_user_role
+    
+    user = get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Validate role
+    if request.role not in ['admin', 'manager', 'viewer']:
+        raise HTTPException(status_code=400, detail="Invalid role. Must be: admin, manager, or viewer")
+    
+    # Update role
+    update_user_role(user_id, request.role)
+    
+    return {"success": True, "message": "User role updated"}
 
 @router.delete("/users/{user_id}")
 async def delete_user(

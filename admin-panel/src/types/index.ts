@@ -2,6 +2,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  role: "admin" | "manager" | "viewer";
   status: "active" | "inactive" | "locked" | "suspended";
   created_at: string;
 }

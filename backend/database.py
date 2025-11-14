@@ -48,10 +48,21 @@ def init_db():
                 username TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 email TEXT UNIQUE NOT NULL,
+                role TEXT DEFAULT 'viewer' CHECK(role IN ('admin', 'manager', 'viewer')),
                 status TEXT DEFAULT 'active' CHECK(status IN ('active', 'inactive', 'locked', 'suspended')),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        # Add role column if it doesn't exist (migration for existing databases)
+        cursor.execute("""
+            SELECT COUNT(*) as count FROM pragma_table_info('users') WHERE name='role'
+        """)
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+                ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'viewer' CHECK(role IN ('admin', 'manager', 'viewer'))
+            """)
+            print("✅ Added 'role' column to users table")
         
         # Login attempts table
         cursor.execute("""
@@ -178,7 +189,7 @@ def execute_update(query: str, params: tuple = ()) -> int:
 # USER FUNCTIONS
 # ============================================================================
 
-def create_user(username: str, password_hash: str, email: str, status: str = 'active') -> int:
+def create_user(username: str, password_hash: str, email: str, role: str = 'viewer', status: str = 'active') -> int:
     """
     Create a new user
     
@@ -186,16 +197,17 @@ def create_user(username: str, password_hash: str, email: str, status: str = 'ac
         username: Unique username
         password_hash: Hashed password
         email: User email address
+        role: User role (admin, manager, viewer)
         status: User status (active, inactive, locked, suspended)
     
     Returns:
         User ID of the created user
     """
     query = """
-        INSERT INTO users (username, password_hash, email, status) 
-        VALUES (?, ?, ?, ?)
+        INSERT INTO users (username, password_hash, email, role, status) 
+        VALUES (?, ?, ?, ?, ?)
     """
-    return execute_insert(query, (username, password_hash, email, status))
+    return execute_insert(query, (username, password_hash, email, role, status))
 
 def get_user(username: str) -> Optional[Dict[str, Any]]:
     """
@@ -228,9 +240,14 @@ def update_user_status(username: str, status: str) -> int:
     query = "UPDATE users SET status = ? WHERE username = ?"
     return execute_update(query, (status, username))
 
+def update_user_role(user_id: int, role: str) -> int:
+    """Update user role"""
+    query = "UPDATE users SET role = ? WHERE id = ?"
+    return execute_update(query, (role, user_id))
+
 def list_all_users() -> List[Dict[str, Any]]:
     """Get all users"""
-    query = "SELECT id, username, email, status, created_at FROM users ORDER BY created_at DESC"
+    query = "SELECT id, username, email, role, status, created_at FROM users ORDER BY created_at DESC"
     return execute_query(query)
 
 # ============================================================================
