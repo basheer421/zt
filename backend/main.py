@@ -301,16 +301,23 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
         # Force 2FA for India logins (country == 'IN' or username == 'india_user')
         if country == 'IN' or auth_request.username == 'india_user':
             require_2fa = True
+            print(f"[2FA] FORCING 2FA for India/india_user - Username: {auth_request.username}, Country: {country}")
         elif ml_risk_score >= 70:
             # High risk - always require 2FA
             require_2fa = True
+            print(f"[2FA] High risk score ({ml_risk_score}) - Requiring 2FA")
         elif ml_risk_score >= 30:
             # Medium risk - require 2FA for unknown devices
             require_2fa = not device_known
+            print(f"[2FA] Medium risk ({ml_risk_score}) - Device known: {device_known}, Require 2FA: {require_2fa}")
         else:
             # Low risk - allow direct login
-            require_2fa = False        if require_2fa:
+            require_2fa = False
+            print(f"[2FA] Low risk ({ml_risk_score}) - Allowing direct login")
+        
+        print(f"[2FA] FINAL DECISION - require_2fa: {require_2fa}")        if require_2fa:
             # Return OTP challenge instead of allowing direct login
+            print(f"[RESPONSE] Returning OTP challenge for user: {auth_request.username}")
             log_login_attempt(
                 username=auth_request.username,
                 ip_address=client_ip,
@@ -320,14 +327,16 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
                 action="challenge",
                 success=False
             )
-            
-            return AuthenticateResponse(
+
+            otp_response = AuthenticateResponse(
                 status="otp",
                 message="Two-factor authentication required",
                 username=auth_request.username,
                 risk_score=risk_score,
                 role=user.get('role', 'viewer')
             )
+            print(f"[RESPONSE] OTP Response: status={otp_response.status}, message={otp_response.message}")
+            return otp_response
         
         # Register/update device
         register_device(auth_request.username, auth_request.device_fingerprint)
