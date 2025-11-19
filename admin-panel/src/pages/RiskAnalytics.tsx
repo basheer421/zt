@@ -35,8 +35,8 @@ export default function RiskAnalytics() {
   };
 
   const getRiskLevel = (score: number) => {
-    if (score >= 70) return { label: "High", color: "bg-red-100 text-red-800" };
-    if (score >= 30)
+    if (score >= 0.70) return { label: "High", color: "bg-red-100 text-red-800" };
+    if (score >= 0.30)
       return { label: "Medium", color: "bg-yellow-100 text-yellow-800" };
     return { label: "Low", color: "bg-green-100 text-green-800" };
   };
@@ -50,11 +50,11 @@ export default function RiskAnalytics() {
   }
 
   // Calculate summary stats
-  const highRiskCount = riskyUsers.filter((u) => u.avg_risk_score >= 70).length;
+  const highRiskCount = riskyUsers.filter((u) => u.avg_risk_score >= 0.70).length;
   const mediumRiskCount = riskyUsers.filter(
-    (u) => u.avg_risk_score >= 30 && u.avg_risk_score < 70
+    (u) => u.avg_risk_score >= 0.30 && u.avg_risk_score < 0.70
   ).length;
-  const lowRiskCount = riskyUsers.filter((u) => u.avg_risk_score < 30).length;
+  const lowRiskCount = riskyUsers.filter((u) => u.avg_risk_score < 0.30).length;
 
   return (
     <div className="space-y-6">

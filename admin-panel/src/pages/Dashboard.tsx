@@ -200,9 +200,9 @@ export default function Dashboard() {
                     cy="96"
                     r="80"
                     stroke={
-                      (stats?.avg_risk_score || 0) * 100 >= 70
+                      (stats?.avg_risk_score || 0) >= 0.70
                         ? "#ef4444"
-                        : (stats?.avg_risk_score || 0) * 100 >= 30
+                        : (stats?.avg_risk_score || 0) >= 0.30
                         ? "#f59e0b"
                         : "#10b981"
                     }
