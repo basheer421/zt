@@ -289,8 +289,10 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
         else:
             # Get ML-based risk assessment for regular users
             risk_assessment = predict_risk(auth_request.username, login_data)
-            ml_risk_score = risk_assessment['risk_score']  # Keep original 0-100 score        risk_score = ml_risk_score / 100.0  # Convert 0-100 to 0-1 for compatibility
+            ml_risk_score = risk_assessment['risk_score']  # Keep original 0-100 score
         
+        risk_score = ml_risk_score / 100.0  # Convert 0-100 to 0-1 for compatibility
+
         # DECISION: Require 2FA based on ML risk assessment
         # High risk (70+) = Require 2FA
         # Medium risk (30-70) = Require 2FA for unknown devices
