@@ -20,3 +20,6 @@ pydantic-settings==2.5.2
 
 # Email (optional - can be removed if not using)
 resend==2.4.0
+
+# HTTP requests for IP geolocation
+requests==2.32.3
