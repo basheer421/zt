@@ -31,6 +31,8 @@ class AuthenticateRequest(BaseModel):
     device_fingerprint: str = Field(..., description="Unique device identifier")
     ip_address: Optional[str] = Field(None, description="Client IP address (auto-detected if not provided)")
     location: Optional[str] = Field(None, description="Geographic location (auto-detected if not provided)")
+    user_agent: Optional[str] = Field(None, description="Browser user agent string")
+    asn: Optional[int] = Field(None, description="Autonomous System Number for IP")
 
 class AuthenticateResponse(BaseModel):
     status: str = Field(..., description="Authentication status: success or invalid_credentials")
@@ -227,9 +229,9 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
         login_data = {
             'ip_address': client_ip,
             'country': country,
-            'asn': 0,  # Unknown ASN (could be enhanced with IP lookup)
+            'asn': auth_request.asn or 0,  # Use provided ASN or default to 0
             'device_type': 'desktop',  # Could be enhanced with device fingerprint parsing
-            'user_agent': 'Unknown',  # Should be added to AuthenticateRequest if available
+            'user_agent': auth_request.user_agent or 'Unknown',  # Use provided user agent
             'browser': 'Unknown',
             'os': 'Unknown',
             'timestamp': auth_request.timestamp

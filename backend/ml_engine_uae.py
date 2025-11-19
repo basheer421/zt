@@ -37,6 +37,9 @@ UAE_ASNS = [5384, 15802, 42298, 35753, 36351]  # Etisalat, Du, etc.
 # Known attack ASNs from dataset
 ATTACK_ASNS = [3280, 503109, 62350, 56851]
 
+# Cloud provider ASNs (AWS, Azure, GCP, DigitalOcean, etc.) - potential VPN/proxy
+CLOUD_ASNS = [16509, 14618, 15169, 8075, 14061, 396982]  # AWS, Amazon, Google, Microsoft, DigitalOcean
+
 # Business hours in UAE (UTC+4, so 04:00-14:00 UTC is 8 AM - 6 PM local)
 BUSINESS_HOURS_UTC = list(range(4, 15))  # 8 AM - 6 PM UAE time
 SUSPICIOUS_HOURS_UTC = list(range(22, 24)) + list(range(0, 3))  # 2 AM - 6 AM UAE time
@@ -46,6 +49,22 @@ def is_private_ip(ip_str: str) -> bool:
     try:
         ip = ipaddress.IPv4Address(ip_str)
         return ip.is_private
+    except:
+        return False
+
+def is_cloud_ip(ip_str: str) -> bool:
+    """Check if IP is likely from a cloud provider (basic check)"""
+    try:
+        ip = ipaddress.IPv4Address(ip_str)
+        # Common cloud provider ranges (simplified)
+        cloud_ranges = [
+            ipaddress.IPv4Network('3.0.0.0/8'),      # AWS
+            ipaddress.IPv4Network('13.0.0.0/8'),     # AWS
+            ipaddress.IPv4Network('52.0.0.0/8'),     # AWS
+            ipaddress.IPv4Network('104.0.0.0/8'),    # Azure
+            ipaddress.IPv4Network('35.0.0.0/8'),     # GCP
+        ]
+        return any(ip in network for network in cloud_ranges)
     except:
         return False
 
@@ -168,13 +187,16 @@ def assess_risk_rules(username: str, login_data: Dict[str, Any]) -> Dict[str, An
     elif country in ACCEPTABLE_COUNTRIES:
         risk_score = 40
         risk_factors.append(f"⚠️  Acceptable country ({country})")
-        
+
+        # Check for cloud/VPN usage (increases risk)
+        if asn in CLOUD_ASNS or is_cloud_ip(ip):
+            risk_score += 10
+            risk_factors.append("⚠️  Cloud provider IP (potential VPN)")
+
         # Reduce risk for India during business hours (outsourcing)
         if country == 'IN' and hour_utc in range(4, 14):  # 9:30 AM - 6:30 PM India time
             risk_score -= 10
-            risk_factors.append("✓ India business hours")
-    
-    # Unknown country = medium risk
+            risk_factors.append("✓ India business hours")    # Unknown country = medium risk
     else:
         if country not in HIGH_RISK_COUNTRIES:
             risk_score = 45
