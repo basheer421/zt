@@ -295,9 +295,13 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
         # High risk (70+) = Require 2FA
         # Medium risk (30-70) = Require 2FA for unknown devices
         # Low risk (<30) = Allow direct login
-        device_known = is_known_device(auth_request.username, auth_request.device_fingerprint)
-        
-        if ml_risk_score >= 70:
+        # EXCEPTION: India logins ALWAYS require 2FA regardless of device
+        device_known = is_known_device(auth_request.username, auth_request.device_fingerprint)       
+
+        # Force 2FA for India logins (country == 'IN' or username == 'india_user')
+        if country == 'IN' or auth_request.username == 'india_user':
+            require_2fa = True
+        elif ml_risk_score >= 70:
             # High risk - always require 2FA
             require_2fa = True
         elif ml_risk_score >= 30:
@@ -305,9 +309,7 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
             require_2fa = not device_known
         else:
             # Low risk - allow direct login
-            require_2fa = False
-        
-        if require_2fa:
+            require_2fa = False        if require_2fa:
             # Return OTP challenge instead of allowing direct login
             log_login_attempt(
                 username=auth_request.username,
