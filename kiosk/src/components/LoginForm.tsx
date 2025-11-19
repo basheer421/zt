@@ -48,8 +48,9 @@ const LoginForm = () => {
     setStatus({ type: "loading", message: "Authenticating..." });
 
     try {
-      // Collect device fingerprint
+      // Collect device fingerprint and user agent
       const deviceFingerprint = navigator.userAgent;
+      const userAgent = navigator.userAgent;
 
       // Get current timestamp
       const timestamp = new Date().toISOString();
@@ -60,6 +61,7 @@ const LoginForm = () => {
         password,
         timestamp,
         device_fingerprint: deviceFingerprint,
+        user_agent: userAgent,
         // IP and location will be auto-detected by backend from request headers
       };
 
