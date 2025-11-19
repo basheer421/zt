@@ -6,6 +6,7 @@ from typing import Optional
 import uvicorn
 import bcrypt
 from datetime import datetime
+import requests
 
 from database import (
     init_db, 
@@ -154,10 +155,23 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
         # Auto-detect location from IP if not provided
         location = auth_request.location
         if not location and client_ip and client_ip != "unknown":
-            # For now, set to UAE if IP is detected (can be enhanced with IP geolocation service)
-            location = "Dubai, AE"
-        
-        # Get user from database
+            # Use IP geolocation service to detect real location
+            try:
+                # Using ip-api.com (free, no API key needed, 45 req/min limit)
+                geo_response = requests.get(f"http://ip-api.com/json/{client_ip}", timeout=2)
+                if geo_response.status_code == 200:
+                    geo_data = geo_response.json()
+                    if geo_data.get('status') == 'success':
+                        city = geo_data.get('city', 'Unknown')
+                        country_code = geo_data.get('countryCode', 'XX')
+                        location = f"{city}, {country_code}"
+                    else:
+                        location = "Unknown, XX"
+                else:
+                    location = "Unknown, XX"
+            except Exception as e:
+                print(f"Geolocation error: {e}")
+                location = "Unknown, XX"        # Get user from database
         user = get_user(auth_request.username)
         
         if not user:
