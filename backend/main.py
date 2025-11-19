@@ -158,20 +158,25 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
             # Use IP geolocation service to detect real location
             try:
                 # Using ip-api.com (free, no API key needed, 45 req/min limit)
-                geo_response = requests.get(f"http://ip-api.com/json/{client_ip}", timeout=2)
+                print(f"[GEO] Detecting location for IP: {client_ip}")
+                geo_response = requests.get(f"http://ip-api.com/json/{client_ip}", timeout=2)        
                 if geo_response.status_code == 200:
                     geo_data = geo_response.json()
+                    print(f"[GEO] API Response: {geo_data}")
                     if geo_data.get('status') == 'success':
                         city = geo_data.get('city', 'Unknown')
                         country_code = geo_data.get('countryCode', 'XX')
                         location = f"{city}, {country_code}"
+                        print(f"[GEO] Detected: {location}")
                     else:
                         location = "Unknown, XX"
+                        print(f"[GEO] API returned failure status")
                 else:
                     location = "Unknown, XX"
+                    print(f"[GEO] API returned status code: {geo_response.status_code}")
             except Exception as e:
-                print(f"Geolocation error: {e}")
-                location = "Unknown, XX"        # Get user from database
+                print(f"[GEO] Geolocation error: {e}")
+                location = "Unknown, XX"
         user = get_user(auth_request.username)
         
         if not user:
@@ -264,13 +269,14 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
         }
 
         # Check if login is from India FIRST (applies to all users including demos)
-        if country == 'IN':
+        # Also apply to test user 'india_user' for testing purposes
+        if country == 'IN' or auth_request.username == 'india_user':
             # India always requires 2FA - set minimum risk to 40 (medium)
             ml_risk_score = 40
             risk_assessment = {
                 'risk_score': 40,
                 'risk_level': 'medium',
-                'factors': ['India login - 2FA required by policy']
+                'factors': ['India login - 2FA required by policy' if country == 'IN' else 'Test: India user - 2FA required']
             }
         elif auth_request.username in DEMO_USERS:
             # Use hardcoded risk score for demo users (only if not from India)

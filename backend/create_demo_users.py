@@ -26,6 +26,12 @@ DEMO_USERS = [
         'email': 'red@example.com',
         'role': 'user',
         'description': 'High risk demo user (RED) - Risk Score: 85'
+    },
+    {
+        'username': 'india_user',
+        'email': 'india@example.com',
+        'role': 'user',
+        'description': 'India test user - Always requires 2FA (simulates India login)'
     }
 ]
 
