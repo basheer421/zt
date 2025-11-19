@@ -1,0 +1,48 @@
+# Openbox Configuration for Kiosk Mode
+# Copy to: ~/.config/openbox/rc.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_config xmlns="http://openbox.org/3.4/rc">
+  <keyboard>
+    <!-- Disable all default keybindings by not including them -->
+    <!-- The Electron app will handle all keyboard input -->
+    
+    <!-- Optional: Keep only essential bindings for maintenance -->
+    <!-- Uncomment these ONLY for debugging/maintenance mode -->
+    <!--
+    <keybind key="C-A-T">
+      <action name="Execute">
+        <command>xterm</command>
+      </action>
+    </keybind>
+    -->
+  </keyboard>
+
+  <mouse>
+    <!-- Minimal mouse configuration -->
+    <dragThreshold>1</dragThreshold>
+    <doubleClickTime>200</doubleClickTime>
+    <screenEdgeWarpTime>0</screenEdgeWarpTime>
+    
+    <!-- Disable desktop context menu -->
+    <context name="Desktop">
+      <mousebind button="Right" action="Press">
+        <action name="DoNothing"/>
+      </mousebind>
+    </context>
+  </mouse>
+
+  <applications>
+    <!-- Force kiosk app to be fullscreen and always on top -->
+    <application class="*">
+      <maximized>true</maximized>
+      <fullscreen>true</fullscreen>
+      <decor>no</decor>
+    </application>
+  </applications>
+
+  <desktops>
+    <number>1</number>
+    <firstdesk>1</firstdesk>
+  </desktops>
+</openbox_config>

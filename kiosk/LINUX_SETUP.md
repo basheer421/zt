@@ -1,0 +1,415 @@
+# Zero Trust Kiosk - Linux Setup Guide
+
+This guide covers setting up the Zero Trust Kiosk on Ubuntu/Linux with Openbox for true kiosk mode.
+
+## VirtualBox Setup (If Running in VM)
+
+**IMPORTANT**: If running in VirtualBox, configure these settings BEFORE starting the VM to avoid GPU/graphics errors and white screen issues.
+
+### Required VirtualBox Settings
+
+1. **Enable 3D Acceleration** (CRITICAL)
+
+   ```
+   Settings → Display → Screen
+   ☑ Enable 3D Acceleration
+   ☑ Enable 2D Video Acceleration
+   Video Memory: 128 MB (maximum)
+   Graphics Controller: VMSVGA (or VBoxSVGA for better Linux support)
+   ```
+
+2. **Processor Configuration**
+
+   ```
+   Settings → System → Processor
+   CPUs: At least 2 CPUs
+   ☑ Enable PAE/NX
+   ```
+
+3. **Increase Base Memory**
+
+   ```
+   Settings → System → Motherboard
+   Base Memory: At least 2048 MB (4096 MB recommended for Electron apps)
+   ```
+
+4. **Enable Integration Features**
+   ```
+   Settings → General → Advanced
+   Shared Clipboard: Bidirectional
+   Drag'n'Drop: Bidirectional
+   ```
+
+### Install VirtualBox Guest Additions (CRITICAL)
+
+After starting the VM, install Guest Additions for proper graphics drivers:
+
+```bash
+# Install Guest Additions packages
+sudo apt update
+sudo apt install -y virtualbox-guest-dkms virtualbox-guest-utils virtualbox-guest-x11
+
+# Add user to video group
+sudo usermod -aG video $USER
+
+# Fix X11 permissions for Electron
+xhost +local:
+
+# Reboot to apply all changes
+sudo reboot
+```
+
+**Why Guest Additions?** They provide proper GPU drivers that fix:
+
+- `Failed to load GLES library: Permission denied` errors
+- `Authorization required, but no authorization protocol specified` errors
+- `XGetWindowAttributes failed for window` errors
+- Renderer process crashes causing white screen
+- GPU initialization failures
+
+### Troubleshooting VM Graphics Issues
+
+**Error: `XGetWindowAttributes failed for window`**
+
+This X11 error indicates the window system can't access window properties. Fixes:
+
+```bash
+# Fix 1: Install/reinstall Guest Additions with X11 support
+sudo apt update
+sudo apt install --reinstall virtualbox-guest-x11 virtualbox-guest-utils
+
+# Fix 2: Grant X11 access
+xhost +local:
+
+# Fix 3: Verify X11 is running properly
+echo $DISPLAY  # Should show :0 or :1
+
+# Fix 4: If DISPLAY is empty, set it
+export DISPLAY=:0
+
+# Fix 5: Restart X11/GNOME session (or just reboot)
+sudo systemctl restart gdm3  # For GNOME
+# OR
+sudo reboot
+```
+
+**Error: `Failed to load GLES library: Permission denied`**
+
+```bash
+# 1. Verify Guest Additions are installed
+lsmod | grep vbox
+
+# 2. Reinstall if needed
+sudo apt install --reinstall virtualbox-guest-x11
+
+# 3. Fix permissions
+sudo usermod -aG video $USER
+xhost +local:
+
+# 4. Reboot
+sudo reboot
+```
+
+## Quick Start
+
+### 1. Install Dependencies
+
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install -y openbox xorg unclutter firefox
+
+# For development
+cd kiosk
+npm install
+npm run electron:install
+```
+
+### 2. Run in Development Mode
+
+```bash
+# Start Vite dev server + Electron
+npm run electron:dev
+```
+
+### 3. Build for Production
+
+```bash
+# Build Linux packages (.AppImage and .deb)
+npm run electron:build
+```
+
+## Production Kiosk Setup (Ubuntu)
+
+### Option 1: Openbox (Recommended - Minimal)
+
+**Step 1: Install Openbox**
+
+```bash
+sudo apt install openbox xorg xinit
+```
+
+**Step 2: Create Kiosk User**
+
+```bash
+sudo adduser kiosk
+sudo usermod -aG sudo kiosk  # Optional: for maintenance
+```
+
+**Step 3: Configure Auto-Login**
+
+Edit `/etc/lightdm/lightdm.conf` (or `/etc/gdm3/custom.conf` for GDM):
+
+```ini
+[Seat:*]
+autologin-user=kiosk
+autologin-user-timeout=0
+user-session=openbox
+```
+
+**Step 4: Install the Kiosk App**
+
+```bash
+# Copy built app
+sudo mkdir -p /opt/zero-trust-kiosk
+sudo cp release/ZeroTrust-Kiosk.AppImage /opt/zero-trust-kiosk/
+sudo chmod +x /opt/zero-trust-kiosk/ZeroTrust-Kiosk.AppImage
+
+# Or install .deb package
+sudo dpkg -i release/zero-trust-kiosk_1.0.0_amd64.deb
+```
+
+**Step 5: Configure Openbox Autostart**
+
+```bash
+# As kiosk user
+mkdir -p ~/.config/openbox
+cp linux-config/openbox-autostart.sh ~/.config/openbox/autostart
+chmod +x ~/.config/openbox/autostart
+```
+
+**Step 6: Configure Openbox Settings** (Optional)
+
+```bash
+cp linux-config/openbox-rc.xml ~/.config/openbox/rc.xml
+```
+
+**Step 7: Reboot**
+
+```bash
+sudo reboot
+```
+
+### Option 2: GNOME (If using existing Ubuntu Desktop)
+
+**Step 1: Disable GNOME Shortcuts**
+
+```bash
+chmod +x linux-config/disable-gnome-shortcuts.sh
+./linux-config/disable-gnome-shortcuts.sh
+```
+
+**Step 2: Add to Startup Applications**
+
+```bash
+mkdir -p ~/.config/autostart
+cat > ~/.config/autostart/kiosk.desktop << EOF
+[Desktop Entry]
+Type=Application
+Name=Zero Trust Kiosk
+Exec=/opt/zero-trust-kiosk/zero-trust-kiosk
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+EOF
+```
+
+### Option 3: Systemd Service (Auto-Recovery)
+
+For maximum reliability with automatic restart on crash:
+
+```bash
+# Copy service file
+sudo cp linux-config/zero-trust-kiosk.service /etc/systemd/system/
+
+# Enable and start
+sudo systemctl enable zero-trust-kiosk
+sudo systemctl start zero-trust-kiosk
+
+# Check status
+sudo systemctl status zero-trust-kiosk
+```
+
+## Security Features
+
+### Electron Global Shortcuts (Blocked)
+
+The Electron app blocks these OS-level shortcuts:
+
+- ✅ Alt+Tab / Alt+Shift+Tab - Window switching
+- ✅ Alt+F4 - Close window
+- ✅ Super/Windows key - Application launcher
+- ✅ Ctrl+Alt+Delete - System menu
+- ✅ Ctrl+Shift+Escape - Task manager
+- ✅ F11 - Fullscreen toggle
+- ✅ Ctrl+Q / Ctrl+W - Quit/Close
+- ✅ Alt+F2 - Run dialog
+- ✅ Ctrl+Alt+T - Terminal
+
+### Additional OS-Level Hardening
+
+**Disable Virtual Terminals** (Ctrl+Alt+F1-F12):
+
+```bash
+sudo systemctl mask getty@tty{2,3,4,5,6}.service
+```
+
+**Disable Suspend/Hibernate**:
+
+```bash
+sudo systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
+```
+
+**Disable Screen Blanking**:
+
+```bash
+# In Openbox autostart (already included)
+xset s off
+xset -dpms
+xset s noblank
+```
+
+## Troubleshooting
+
+### Kiosk Won't Start
+
+```bash
+# Check logs
+journalctl -u zero-trust-kiosk -f
+
+# Check if app exists
+ls -la /opt/zero-trust-kiosk/
+```
+
+### Shortcuts Still Work
+
+```bash
+# Verify GNOME settings (if using GNOME)
+gsettings get org.gnome.desktop.wm.keybindings switch-applications
+
+# Should return: []
+```
+
+### Re-enable Shortcuts (For Maintenance)
+
+```bash
+# GNOME
+dconf reset -f /org/gnome/desktop/wm/keybindings/
+
+# Openbox - edit ~/.config/openbox/rc.xml
+```
+
+### Access Terminal for Maintenance
+
+```bash
+# Ctrl+Alt+F3 (if not disabled)
+# Or SSH from another machine
+ssh kiosk@kiosk-ip-address
+```
+
+## Development Tips
+
+### Running Without Kiosk Mode (For Testing)
+
+Modify `electron/main.js`:
+
+```javascript
+const mainWindow = new BrowserWindow({
+  fullscreen: false, // Change this
+  kiosk: false, // And this
+  // ...
+});
+```
+
+### Debugging Electron
+
+```bash
+# Electron will open DevTools automatically in dev mode
+npm run electron:dev
+```
+
+### Building for Different Architectures
+
+```bash
+# ARM64 (Raspberry Pi, etc.)
+cd electron && electron-builder --linux --arm64
+
+# Both x64 and ARM64
+cd electron && electron-builder --linux --x64 --arm64
+```
+
+## Deployment Checklist
+
+- [ ] Built production Electron app (`npm run electron:build`)
+- [ ] Copied app to `/opt/zero-trust-kiosk/`
+- [ ] Created kiosk user account
+- [ ] Configured auto-login
+- [ ] Set up Openbox autostart or systemd service
+- [ ] Disabled GNOME/desktop shortcuts (if applicable)
+- [ ] Disabled virtual terminals
+- [ ] Tested Alt+Tab blocking
+- [ ] Tested auto-recovery on crash
+- [ ] Configured backend API endpoint
+- [ ] Tested login flow
+
+## File Locations
+
+| File            | Purpose                 | Location                                       |
+| --------------- | ----------------------- | ---------------------------------------------- |
+| Main app        | Electron executable     | `/opt/zero-trust-kiosk/`                       |
+| Autostart       | Launch on login         | `~/.config/openbox/autostart`                  |
+| Openbox config  | Window manager settings | `~/.config/openbox/rc.xml`                     |
+| Systemd service | Auto-recovery           | `/etc/systemd/system/zero-trust-kiosk.service` |
+| Logs            | System logs             | `journalctl -u zero-trust-kiosk`               |
+
+## Performance Optimization
+
+### Reduce Memory Usage
+
+```javascript
+// In electron/main.js
+webPreferences: {
+  backgroundThrottling: true,
+}
+```
+
+### Faster Startup
+
+```bash
+# Use AppImage for faster startup
+# Or compile from source with custom flags
+```
+
+## Remote Management
+
+### SSH Access
+
+```bash
+# Enable SSH
+sudo apt install openssh-server
+sudo systemctl enable ssh
+
+# Connect remotely
+ssh kiosk@192.168.1.100
+```
+
+### Remote Restart
+
+```bash
+# Via SSH
+sudo systemctl restart zero-trust-kiosk
+```
+
+## License
+
+MIT
