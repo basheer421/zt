@@ -188,7 +188,7 @@ export default function RiskAnalytics() {
                       {user.username}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {user.avg_risk_score.toFixed(1)}
+                      {(user.avg_risk_score * 100).toFixed(1)}%
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
