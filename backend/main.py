@@ -314,8 +314,10 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
             # Low risk - allow direct login
             require_2fa = False
             print(f"[2FA] Low risk ({ml_risk_score}) - Allowing direct login")
+
+        print(f"[2FA] FINAL DECISION - require_2fa: {require_2fa}")
         
-        print(f"[2FA] FINAL DECISION - require_2fa: {require_2fa}")        if require_2fa:
+        if require_2fa:
             # Return OTP challenge instead of allowing direct login
             print(f"[RESPONSE] Returning OTP challenge for user: {auth_request.username}")
             log_login_attempt(
