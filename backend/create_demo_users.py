@@ -17,7 +17,7 @@ DEMO_USERS = [
     },
     {
         'username': 'yellow_user',
-        'email': 'yellow@example.com',
+        'email': 'nvx.naj@gmail.com',
         'role': 'user',
         'description': 'Medium risk demo user (YELLOW) - Risk Score: 50'
     },
