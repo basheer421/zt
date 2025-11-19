@@ -240,6 +240,9 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
             if len(parts) >= 2:
                 country = parts[-1].strip()[:2].upper()
         
+        # Debug logging
+        print(f"[AUTH DEBUG] User: {auth_request.username}, IP: {client_ip}, Location: {location}, Country: {country}")
+        
         login_data = {
             'ip_address': client_ip,
             'country': country,
@@ -253,14 +256,24 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
         
         # HARDCODED DEMO USERS - Override ML predictions for demo purposes
         # These users always return specific risk levels regardless of actual data
+        # HOWEVER: India location ALWAYS requires 2FA, even for demo users
         DEMO_USERS = {
             'green_user': 15,   # Low risk - GREEN (0-29)
             'yellow_user': 50,  # Medium risk - YELLOW (30-69)
             'red_user': 85      # High risk - RED (70-100)
         }
-        
-        if auth_request.username in DEMO_USERS:
-            # Use hardcoded risk score for demo users
+
+        # Check if login is from India FIRST (applies to all users including demos)
+        if country == 'IN':
+            # India always requires 2FA - set minimum risk to 40 (medium)
+            ml_risk_score = 40
+            risk_assessment = {
+                'risk_score': 40,
+                'risk_level': 'medium',
+                'factors': ['India login - 2FA required by policy']
+            }
+        elif auth_request.username in DEMO_USERS:
+            # Use hardcoded risk score for demo users (only if not from India)
             ml_risk_score = DEMO_USERS[auth_request.username]
             risk_assessment = {
                 'risk_score': ml_risk_score,
@@ -270,9 +283,7 @@ async def authenticate(auth_request: AuthenticateRequest, http_request: Request)
         else:
             # Get ML-based risk assessment for regular users
             risk_assessment = predict_risk(auth_request.username, login_data)
-            ml_risk_score = risk_assessment['risk_score']  # Keep original 0-100 score
-        
-        risk_score = ml_risk_score / 100.0  # Convert 0-100 to 0-1 for compatibility
+            ml_risk_score = risk_assessment['risk_score']  # Keep original 0-100 score        risk_score = ml_risk_score / 100.0  # Convert 0-100 to 0-1 for compatibility
         
         # DECISION: Require 2FA based on ML risk assessment
         # High risk (70+) = Require 2FA
