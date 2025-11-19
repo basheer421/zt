@@ -188,15 +188,19 @@ def assess_risk_rules(username: str, login_data: Dict[str, Any]) -> Dict[str, An
         risk_score = 40
         risk_factors.append(f"⚠️  Acceptable country ({country})")
 
+        # India always requires 2FA (medium risk minimum)
+        if country == 'IN':
+            risk_score = max(40, risk_score)  # Ensure at least 40 (medium risk)
+            risk_factors.append("⚠️  India login - 2FA required")
+            # Business hours adjustment for India
+            if hour_utc in range(4, 14):  # 9:30 AM - 6:30 PM India time
+                # Keep medium risk but acknowledge business hours
+                risk_factors.append("✓ India business hours")
+
         # Check for cloud/VPN usage (increases risk)
         if asn in CLOUD_ASNS or is_cloud_ip(ip):
             risk_score += 10
-            risk_factors.append("⚠️  Cloud provider IP (potential VPN)")
-
-        # Reduce risk for India during business hours (outsourcing)
-        if country == 'IN' and hour_utc in range(4, 14):  # 9:30 AM - 6:30 PM India time
-            risk_score -= 10
-            risk_factors.append("✓ India business hours")    # Unknown country = medium risk
+            risk_factors.append("⚠️  Cloud provider IP (potential VPN)")    # Unknown country = medium risk
     else:
         if country not in HIGH_RISK_COUNTRIES:
             risk_score = 45
