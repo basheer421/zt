@@ -117,7 +117,11 @@ async def health_check():
     Health check endpoint
     Returns the API health status
     """
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "version": "2025-11-20-india-otp-fix",
+        "features": ["india_otp_enforcement", "syntax_errors_fixed"]
+    }
 
 @app.post("/api/authenticate", response_model=AuthenticateResponse, tags=["Authentication"])
 async def authenticate(auth_request: AuthenticateRequest, http_request: Request):
