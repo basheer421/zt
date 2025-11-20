@@ -31,7 +31,7 @@ export const blockKioskEscapeInputs = () => {
 
   // Prevent keyboard shortcuts
   const handleKeyDown = (e: KeyboardEvent) => {
-    const key = e.key.toLowerCase();
+    const key = e.key?.toLowerCase() || '';
     const ctrl = e.ctrlKey;
     const alt = e.altKey;
     const meta = e.metaKey; // Command key on Mac
